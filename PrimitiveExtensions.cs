@@ -53,6 +53,30 @@ namespace Funcular.ExtensionMethods
         private static readonly Regex _notNullOrWhitespace = new Regex(@"/^[\s]*$/", RegexOptions.Compiled);
 
         /// <summary>
+        ///     The negation of string.IsNullOrEmpty.
+        /// </summary>
+        /// <param name="value"></param>
+        /// <returns></returns>
+        public static bool HasValue(this string value)
+        {
+            return !String.IsNullOrEmpty(value);
+        }
+
+        /// <summary>
+        ///     The negation of string.IsNullOrWhitespace.
+        /// </summary>
+        /// <param name="value"></param>
+        /// <returns></returns>
+        public static bool HasWordValue(this string value)
+        {
+#if GT_NET_35
+            return !string.IsNullOrWhiteSpace(value);
+#else
+            return !(_notNullOrWhitespace.IsMatch(value ?? ""));
+#endif
+        }
+
+        /// <summary>
         ///     Returns the first non null value found.
         /// </summary>
         /// <param name="value"></param>
@@ -89,30 +113,6 @@ namespace Funcular.ExtensionMethods
                 : (tmp = (others.FirstOrDefault(arg => arg.HasValue))).HasValue ? tmp.Value : default(decimal);
         }
 
-        /// <summary>
-        ///     The negation of string.IsNullOrEmpty.
-        /// </summary>
-        /// <param name="value"></param>
-        /// <returns></returns>
-        public static bool HasValue(this string value)
-        {
-            return !String.IsNullOrEmpty(value);
-        }
-
-        /// <summary>
-        ///     The negation of string.IsNullOrWhitespace.
-        /// </summary>
-        /// <param name="value"></param>
-        /// <returns></returns>
-        public static bool HasWordValue(this string value)
-        {
-#if GT_NET_35
-            return !string.IsNullOrWhiteSpace(value);
-#else
-            return !(_notNullOrWhitespace.IsMatch(value ?? ""));
-#endif
-        }
-
         public static string TrimOrEmpty(this string value)
         {
             return (value ?? String.Empty).Trim();
@@ -144,6 +144,22 @@ namespace Funcular.ExtensionMethods
             if (caseSensitive)
                 return values.AsQueryable().Any(s => s == sought);
             return values.AsQueryable().Any(s => s.Equals(sought, StringComparison.OrdinalIgnoreCase));
+        }
+
+        /// <summary>
+        /// This signature is on almost every other string.comparision method, but they
+        /// left it out for .Contains. It is long-overdue justice that we restore it now.
+        /// Returns false if either string is null.
+        /// </summary>
+        /// <param name="value"></param>
+        /// <param name="find"></param>
+        /// <param name="comparison"></param>
+        /// <returns></returns>
+        public static bool Contains(this string value, string find, StringComparison comparison)
+        {
+            if (value == null || find == null)
+                return false;
+            return value.IndexOf(find, comparison) >= 0;
         }
 
         /// <summary>
