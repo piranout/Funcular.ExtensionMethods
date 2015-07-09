@@ -61,6 +61,7 @@
   <ItemGroup>
     <Compile Include="CaseInsensitiveExpressionVisitor.cs" />
     <Compile Include="EnumerableExtensions.cs" />
+    <Compile Include="ExpressionExtensions.cs" />
     <Compile Include="PrimitiveExtensions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
