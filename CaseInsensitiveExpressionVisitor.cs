@@ -46,24 +46,30 @@ namespace Funcular.ExtensionMethods
     public class CaseInsensitiveExpressionVisitor : ExpressionVisitor
     {
         protected static readonly MethodInfo _method = typeof (string).GetMethod("Equals", new[] {typeof (string), typeof (StringComparison)});
+        
         protected static readonly ConstantExpression _comparison = Expression.Constant(StringComparison.OrdinalIgnoreCase, typeof (StringComparison));
 
-        protected override Expression VisitBinary(BinaryExpression b)
-        {
-            // if (b.NodeType == ExpressionType.AndAlso)
-            if (b.NodeType == ExpressionType.Equal
-                && !b.Left.CanReduce && b.Left.NodeType == ExpressionType.Constant
-                && !b.Right.CanReduce && b.Right.Type == typeof (string))
-            {
-                var left = Visit(b.Left);
-                var right = Visit(b.Right);
+        protected static readonly ConstantExpression _comparisonValue = Expression.Constant((int)StringComparison.OrdinalIgnoreCase, typeof (int));
 
-                // Make this binary expression an OrElse operation instead of an AndAlso operation. 
-                // var someValue = Expression.Constant(propertyValue, typeof(string));
-                var caseInsensitiveMethodExp = Expression.Call(left, _method, right, _comparison);
+        public Expression Modify(Expression expression)
+        {
+            return Visit(expression);
+        }
+
+        protected override Expression VisitBinary(BinaryExpression exp)
+        {
+            if (exp.NodeType == ExpressionType.Equal
+                && !exp.Left.CanReduce && exp.Left.NodeType == ExpressionType.Parameter && exp.Left.Type == typeof(string)
+                && !exp.Right.CanReduce && exp.Right.NodeType == ExpressionType.Parameter)
+            {
+                var method = typeof(string).GetMethod("Equals", new[] { typeof(string), typeof(StringComparison) });
+                var comparison = Expression.Constant(StringComparison.OrdinalIgnoreCase, typeof(StringComparison));
+                // This converts {(s1, s2) => (s1 == s2)} into {(s1, s2) => s1.Equals(s2, OrdinalIgnoreCase)}:
+                // ...when it should be {(s1, s2) => s1.Equals(s2, StringComparison.OrdinalIgnoreCase)}
+                var caseInsensitiveMethodExp = Expression.Call(exp.Left, method, exp.Right, comparison);
                 return caseInsensitiveMethodExp;
             }
-            return base.VisitBinary(b);
+            return base.VisitBinary(exp);
         }
     }
 }
