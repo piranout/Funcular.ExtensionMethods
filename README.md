@@ -12,7 +12,7 @@ Simple extension methods providing syntactic sugar for strings and collections.
 
 This method exists to help correct the mismatch between string comparisons in Entity Framework versus those in ‘regular’ LINQ expressions. 
 
-Entity Framework delegates query evaluation to SQL Server, where string comparisons are according to the database’s collation, which is most often case-insensitive. Outside of EF, however, LINQ queries (regular lambdas on objects) use case-sensitive string comparisons.
+Entity Framework hands off query evaluation to SQL Server, where string comparisons are according to the database’s collation, which is most often case-insensitive. Outside of EF, however, LINQ queries (regular lambdas on objects) use case-sensitive string comparisons.
 
 This project includes an extension method on IQueryable<T>, queryable.AsCaseInsensitive(). This returns an IQueryable with an interceptor for string equality comparisons, converting them from case-sensitive to StringCompare.OrdinalIgnoreCase. 
 
