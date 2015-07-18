@@ -2,14 +2,14 @@
 
 // *********************************************************************************************************
 // Funcular.ExtensionMethods>Funcular.ExtensionMethods>PrimitiveExtensions.cs
-// Created: 2015-06-26 3:02 PM
-// Updated: 2015-06-29 10:46 AM
+// Created: 2015-07-07 12:19 AM
+// Updated: 2015-07-18 9:34 AM
 // By: Paul Smith 
 // 
 // *********************************************************************************************************
 // LICENSE: The MIT License (MIT)
 // *********************************************************************************************************
-// Copyright (c) 2010-2015 <copyright holders>
+// Copyright (c) 2010-2015 Funcular Labs and Paul Smith
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -33,8 +33,6 @@
 
 #endregion
 
-
-
 #region Usings
 
 using System;
@@ -43,8 +41,6 @@ using System.Text;
 using System.Text.RegularExpressions;
 
 #endregion
-
-
 
 namespace Funcular.ExtensionMethods
 {
@@ -59,7 +55,7 @@ namespace Funcular.ExtensionMethods
         /// <returns></returns>
         public static bool HasValue(this string value)
         {
-            return !String.IsNullOrEmpty(value);
+            return !string.IsNullOrEmpty(value);
         }
 
         /// <summary>
@@ -67,13 +63,9 @@ namespace Funcular.ExtensionMethods
         /// </summary>
         /// <param name="value"></param>
         /// <returns></returns>
-        public static bool HasWordValue(this string value)
+        public static bool IsNonWhitespace(this string value)
         {
-#if GT_NET_35
             return !string.IsNullOrWhiteSpace(value);
-#else
-            return !(_notNullOrWhitespace.IsMatch(value ?? ""));
-#endif
         }
 
         /// <summary>
@@ -84,18 +76,23 @@ namespace Funcular.ExtensionMethods
         /// <returns></returns>
         public static string Coalesce(this string value, string other)
         {
-            return value.HasValue() ? value : other;
+            return value.Coalesce(new[] {other});
         }
 
         /// <summary>
-        ///     Returns the first non null value found.
+        ///     Returns the first non null value found, preferring
+        ///     non-empty, non-whitespace values.
         /// </summary>
         /// <param name="value"></param>
         /// <param name="others"></param>
         /// <returns></returns>
         public static string Coalesce(this string value, params string[] others)
         {
-            return value.HasValue() ? value : others.FirstOrDefault(s => s.HasValue());
+            var strings = new string[]{value}.Union(others).ToArray();
+            return 
+                strings.FirstOrDefault(s => s.IsNonWhitespace()) 
+                ?? strings.FirstOrDefault(s => s.HasValue())
+                ?? strings.FirstOrDefault(s => s != null);
         }
 
         /// <summary>
@@ -109,13 +106,14 @@ namespace Funcular.ExtensionMethods
             if (value.HasValue)
                 return value.Value;
             decimal? tmp;
-            return (others == null || others.Length == 0) ? default(decimal)
+            return (others == null || others.Length == 0)
+                ? default(decimal)
                 : (tmp = (others.FirstOrDefault(arg => arg.HasValue))).HasValue ? tmp.Value : default(decimal);
         }
 
         public static string TrimOrEmpty(this string value)
         {
-            return (value ?? String.Empty).Trim();
+            return (value ?? string.Empty).Trim();
         }
 
         /// <summary>
@@ -126,9 +124,8 @@ namespace Funcular.ExtensionMethods
         /// <returns></returns>
         public static bool ContainsAny(this string value, params string[] others)
         {
-            if (others.HasContents() && value.HasValue())
-                return others.Any(s => value.IndexOf(s, StringComparison.OrdinalIgnoreCase) >= 0);
-            return false;
+            return others.HasContents() && value.HasValue() &&
+                   others.Any(s => value.IndexOf(s, StringComparison.OrdinalIgnoreCase) >= 0);
         }
 
         /// <summary>
@@ -141,15 +138,15 @@ namespace Funcular.ExtensionMethods
         /// <returns></returns>
         public static bool Contains(this string[] values, string sought, bool caseSensitive = false)
         {
-            if (caseSensitive)
-                return values.AsQueryable().Any(s => s == sought);
-            return values.AsQueryable().Any(s => s.Equals(sought, StringComparison.OrdinalIgnoreCase));
+            return caseSensitive 
+                ? values.AsQueryable().Any(s => s == sought) 
+                : values.AsQueryable().Any(s => s.Equals(sought, StringComparison.OrdinalIgnoreCase));
         }
 
         /// <summary>
-        /// This signature is on almost every other string.comparision method, but they
-        /// left it out for .Contains. It is long-overdue justice that we restore it now.
-        /// Returns false if either string is null.
+        ///     This signature is on almost every other string.comparision method, but they
+        ///     left it out for .Contains. It is long-overdue justice that we restore it now.
+        ///     Returns false if either string is null.
         /// </summary>
         /// <param name="value"></param>
         /// <param name="find"></param>
@@ -199,8 +196,8 @@ namespace Funcular.ExtensionMethods
         {
             if (!incomingNumber.HasValue())
                 return incomingNumber;
-            return String.Join("", incomingNumber.Split(incomingNumber
-                .Where(c => !Char.IsNumber(c))
+            return string.Join("", incomingNumber.Split(incomingNumber
+                .Where(c => !char.IsNumber(c))
                 .Distinct()
                 .ToArray()));
         }
@@ -229,18 +226,18 @@ namespace Funcular.ExtensionMethods
 
         /// <summary>
         ///     If <paramref name="originalString" /> contains <paramref name="ofString" />, returns everything before
-        ///     <paramref name="ofString" />.
-        ///     Returns an empty string if <paramref name="originalString" /> starts with <paramref name="ofString" />.
+        ///     <paramref name="ofString" />. 
+        ///     Returns an empty string in all other cases.
         /// </summary>
         /// <param name="originalString"></param>
         /// <param name="ofString"></param>
         /// <returns></returns>
         public static string LeftOfFirst(this string originalString, string ofString)
         {
-            if (String.IsNullOrEmpty(originalString))
-                return originalString;
-            int idx = originalString.IndexOf(ofString, StringComparison.OrdinalIgnoreCase);
-            return (idx >= 0 ? originalString.Substring(0, idx) : "");
+            if (string.IsNullOrEmpty(originalString))
+                return string.Empty;
+            var idx = originalString.IndexOf(ofString, StringComparison.OrdinalIgnoreCase);
+            return (idx >= 0 ? originalString.Substring(0, idx) : string.Empty);
         }
 
         /// <summary>
@@ -252,10 +249,10 @@ namespace Funcular.ExtensionMethods
         /// <returns></returns>
         public static string LeftOfLast(this string originalString, string ofString)
         {
-            if (String.IsNullOrEmpty(originalString))
-                return originalString;
-            int idx = originalString.LastIndexOf(ofString, StringComparison.OrdinalIgnoreCase);
-            return (idx >= 0 ? originalString.Substring(0, idx) : originalString);
+            if (string.IsNullOrEmpty(originalString))
+                return string.Empty;
+            var idx = originalString.LastIndexOf(ofString, StringComparison.OrdinalIgnoreCase);
+            return (idx >= 0 ? originalString.Substring(0, idx) : string.Empty);
         }
 
         /// <summary>
@@ -268,30 +265,30 @@ namespace Funcular.ExtensionMethods
         /// <returns></returns>
         public static string RightOfLast(this string originalString, string ofString)
         {
-            if (String.IsNullOrEmpty(originalString))
-                return originalString;
-            int idx = originalString.LastIndexOf(ofString, StringComparison.OrdinalIgnoreCase);
-            return (idx < 0 ?
-                "" :
-                originalString.Substring(idx + ofString.Length, originalString.Length - (idx + ofString.Length)));
+            if (string.IsNullOrEmpty(originalString))
+                return string.Empty;
+            var idx = originalString.LastIndexOf(ofString, StringComparison.OrdinalIgnoreCase);
+            return (idx < 0
+                ? string.Empty
+                : originalString.Substring(idx + ofString.Length, originalString.Length - (idx + ofString.Length)));
         }
 
         /// <summary>
         ///     If <paramref name="originalString" /> contains <paramref name="ofString" />, returns the portion after the first
         ///     occurrence.
-        ///     If not, returns original string.
+        ///     If not, returns empty string.
         /// </summary>
         /// <param name="originalString"></param>
         /// <param name="ofString"></param>
         /// <returns></returns>
         public static string RightOfFirst(this string originalString, string ofString)
         {
-            if (String.IsNullOrEmpty(originalString))
-                return originalString;
-            int idx = originalString.IndexOf(ofString, StringComparison.OrdinalIgnoreCase);
-            return (idx < 0 ?
-                originalString :
-                originalString.Substring(idx + ofString.Length));
+            if (string.IsNullOrEmpty(originalString))
+                return string.Empty;
+            var idx = originalString.IndexOf(ofString, StringComparison.OrdinalIgnoreCase);
+            return (idx < 0
+                ? string.Empty
+                : originalString.Substring(idx + ofString.Length));
         }
 
         /// <summary>
@@ -311,46 +308,46 @@ namespace Funcular.ExtensionMethods
         /// </summary>
         public static int GetIntegerSuffix(this string value)
         {
-            int ret = -1;
-            if (!String.IsNullOrWhiteSpace(value))
+            var ret = -1;
+            if (!string.IsNullOrWhiteSpace(value))
             {
                 var sb = new StringBuilder();
-                char[] chars = value.ToCharArray();
-                for (int i = chars.Length - 1; i >= 0; i--)
+                var chars = value.ToCharArray();
+                for (var i = chars.Length - 1; i >= 0; i--)
                 {
-                    if (Char.IsDigit(chars[i]))
+                    if (char.IsDigit(chars[i]))
                         sb.Insert(0, chars[i]);
                     else
                         break;
                 }
                 int parsed;
-                if (Int32.TryParse(sb.ToString(), out parsed))
+                if (int.TryParse(sb.ToString(), out parsed))
                     ret = parsed;
             }
             return ret;
         }
 
         /// <summary>
-        ///     If value is all digits, returns true, otherwise false.
+        ///     If value is all digits and &gt;= 0, returns true, otherwise false.
         /// </summary>
         public static bool IsPositiveInteger(this string value)
         {
-            if (String.IsNullOrWhiteSpace(value))
+            if (string.IsNullOrWhiteSpace(value))
                 return false;
-            char[] chars = value.ToCharArray();
-            return !chars.Any(c => !Char.IsDigit(c));
+            var chars = value.ToCharArray();
+            return chars.All(c => (char.IsDigit(c) && c != '-'));
         }
 
         /// <summary>
-        ///     True if value without spaces is all digits, or a decimal place, comma, or dollar sign, otherwise false.
+        ///     True if value without spaces is all digits, or a decimal place, comma, minus sign or dollar sign, otherwise false.
         /// </summary>
         public static bool IsNumeric(this string value)
         {
-            if (String.IsNullOrEmpty(value))
+            if (string.IsNullOrEmpty(value))
                 return false;
             value = value.Replace(" ", "");
-            char[] chars = value.ToCharArray();
-            return chars.All(c => Char.IsDigit(c) || c.ToString().IsIn(".", ",", "$"));
+            var chars = value.ToCharArray();
+            return chars.All(c => char.IsDigit(c) || c.ToString().IsIn(".", ",", "$", "-"));
         }
 
         /// <summary>
@@ -358,10 +355,10 @@ namespace Funcular.ExtensionMethods
         /// </summary>
         public static bool IsUsZipCode(this string value)
         {
-            if (String.IsNullOrWhiteSpace(value))
+            if (string.IsNullOrWhiteSpace(value))
                 return false;
             value = value.Replace(" ", "").Replace("-", "");
-            return (new[] {5, 9}).Contains(value.Length) && value.ToCharArray().All(Char.IsDigit);
+            return (new[] {5, 9}).Contains(value.Length) && value.ToCharArray().All(char.IsDigit);
         }
 
         /// <summary>
@@ -371,7 +368,7 @@ namespace Funcular.ExtensionMethods
         /// <returns></returns>
         public static int RoundUp(this decimal value)
         {
-            decimal mod = value%1;
+            var mod = value%1;
             return (int) (mod == 0 ? value : Math.Truncate(value) + 1);
         }
 
@@ -392,7 +389,9 @@ namespace Funcular.ExtensionMethods
         /// <returns></returns>
         public static string ToHex(this byte[] bytes)
         {
-            string hex = BitConverter.ToString(bytes);
+            if (!bytes.HasContents())
+                return string.Empty;
+            var hex = BitConverter.ToString(bytes);
             return hex.Replace("-", "");
         }
 
@@ -416,19 +415,33 @@ namespace Funcular.ExtensionMethods
             return (long) (interval.TotalMilliseconds*1000.0000);
         }
 
+        /// <summary>
+        /// Returns a 64 bit integer &lt;= <paramref name="max"/>.
+        /// </summary>
+        /// <param name="rand"></param>
+        /// <param name="max"></param>
+        /// <returns></returns>
         public static long NextLong(this Random rand, long max)
         {
             var buf = new byte[8];
             rand.NextBytes(buf);
-            long longRand = BitConverter.ToInt64(buf, 0);
+            var longRand = BitConverter.ToInt64(buf, 0);
             return (Math.Abs(longRand%max));
         }
 
+        /// <summary>
+        /// Returns a 64 bit integer between <paramref name="min"/> and
+        /// <paramref name="max"/> inclusive.
+        /// </summary>
+        /// <param name="rand"></param>
+        /// <param name="min"></param>
+        /// <param name="max"></param>
+        /// <returns></returns>
         public static long NextLong(this Random rand, long min, long max)
         {
             var buf = new byte[8];
             rand.NextBytes(buf);
-            long longRand = BitConverter.ToInt64(buf, 0);
+            var longRand = BitConverter.ToInt64(buf, 0);
 
             return (Math.Abs(longRand%(max - min)) + min);
         }

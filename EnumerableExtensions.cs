@@ -91,11 +91,10 @@ namespace Funcular.ExtensionMethods
         public static IEnumerable<TEntity> OrderBy<TEntity>(this IEnumerable<TEntity> source, string orderByProperty,
             bool desc = false)
         {
-            string command = desc ? "OrderByDescending" : "OrderBy";
-            Type type = typeof (TEntity);
-            // TODO: Statically cache property
-            PropertyInfo property = type.GetProperty(orderByProperty);
-            ParameterExpression parameter = Expression.Parameter(type, "p");
+            var command = desc ? "OrderByDescending" : "OrderBy";
+            var type = typeof (TEntity);
+            var property = type.GetCachedProperty(orderByProperty);
+            var parameter = Expression.Parameter(type, "p");
             if (parameter == null || property == null)
                 throw new ArgumentNullException("Unable to order by property named [" + orderByProperty + "]. Check to ensure this property exists in your IEnumerable.");
 
