@@ -41,6 +41,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Text;
 using Funcular.ExtensionMethods;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -109,6 +110,33 @@ namespace UnitTests
             Assert.IsTrue(things.OrderBy("String1", desc: true).First().String1 == "Z9");
             Assert.IsTrue(things.OrderBy("String2").First().String2 == "A1");
             Assert.IsTrue(things.OrderBy("String2", desc: true).First().String2 == "ZZ");
+        }
+
+        [TestMethod]
+        public void Null_Enumerable_Or_Empty_Is_Not_Null()
+        {
+            IEnumerable<int> ints = null;
+            Assert.IsNotNull(ints.OrEmpty());
+            ints = Enumerable.Range(1, 5).OrEmpty();
+            Assert.IsTrue(ints != null && ints.Count() == 5);
+        }
+
+        [TestMethod]
+        public void Median_Enumerable_Finds_Value()
+        {
+            IEnumerable<int> ints = Enumerable.Range(1, 10);
+            var array = ints.ToArray();
+            IEnumerable<Thing> things = array.Select(t => new Thing(){Int1 = t, Int2 = t});
+            // ReSharper disable PossibleInvalidOperationException
+            var median = things.Median(x => x.Int1).Value;
+            Assert.IsTrue(median == 5.5m);
+            ints = Enumerable.Range(1, 11);
+            array = ints.ToArray();
+            things = array.Select(t => new Thing() { Int1 = t, Int2 = t });
+            median = things.Median(x => x.Int1).Value;
+            // ReSharper restore PossibleInvalidOperationException
+            Assert.IsTrue(median == 6);
+            
         }
         #endregion
 
@@ -304,6 +332,13 @@ namespace UnitTests
             Assert.IsTrue("a".IsIn("c","b","a"));
             Assert.IsTrue("A".IsIn("c", "b", "a"));
             Assert.IsFalse("z".IsIn("c", "b", "a"));
+
+            Assert.IsFalse(string.Empty.IsIn("a", "b"));
+            Assert.IsTrue(string.Empty.IsIn("a", "b", string.Empty));
+            Assert.IsFalse(((string)null).IsIn("a", "b", (string)null));
+            Assert.IsFalse(string.Empty.IsIn(new string[0]));
+
+
         }
 
         [TestMethod]
@@ -320,7 +355,7 @@ namespace UnitTests
         }
 
         [TestMethod]
-        public void Positional_Strings_Locate_Values()
+        public void LeftOf_Strings_Locate_Correct_Values()
         {
             Assert.IsTrue("<html><body>".LeftOfFirst("<body>") == "<html>");
             Assert.AreSame(((string)null).LeftOfFirst("<body>"), string.Empty);
@@ -328,22 +363,73 @@ namespace UnitTests
             Assert.AreSame(" ".LeftOfFirst("<body>"), string.Empty);
 
 
-            Assert.IsTrue("<html><body>".RightOfFirst("<html>") == "<body>");
-            Assert.AreSame(((string)null).RightOfFirst("<body>"), string.Empty);
-            Assert.AreSame("".RightOfFirst("<body>"), string.Empty);
-            Assert.AreSame(" ".RightOfFirst("<body>"), string.Empty);
-
-
             Assert.IsTrue("<html><body><div><div>".LeftOfLast("<div>") == "<html><body><div>");
             Assert.AreSame(((string)null).LeftOfLast("<div>"), string.Empty);
             Assert.AreSame("".LeftOfLast("<div>"), string.Empty);
             Assert.AreSame(" ".LeftOfLast("<div>"), string.Empty);
 
+        }
+
+        [TestMethod]
+        public void RightOf_Strings_Locate_Correct_Values()
+        {
+            Assert.IsTrue("<html><body>".RightOfFirst("<html>") == "<body>");
+            Assert.AreSame(((string) null).RightOfFirst("<body>"), string.Empty);
+            Assert.AreSame("".RightOfFirst("<body>"), string.Empty);
+            Assert.AreSame(" ".RightOfFirst("<body>"), string.Empty);
 
             Assert.IsTrue("<html><head><body><div><div></div></div>".RightOfLast("<div>") == "</div></div>");
-            Assert.AreSame(((string)null).RightOfLast("<div>"), string.Empty);
+            Assert.AreSame(((string) null).RightOfLast("<div>"), string.Empty);
             Assert.AreSame("".RightOfLast("<div>"), string.Empty);
             Assert.AreSame(" ".RightOfLast("<div>"), string.Empty);
+        }
+
+        [TestMethod]
+        public void To_Numeric_String_Includes_Only_Digits()
+        {
+            var str = "abc1def2ghi3jkl4mno5pqr6stu7vwx8yz90 right?";
+            var numeric = str.ToNumericString();
+            Assert.IsTrue(numeric.All(char.IsDigit));
+            Assert.AreEqual(string.Empty.ToNumericString(), string.Empty);
+            Assert.AreEqual(((string)null).ToNumericString(), ((string)null));
+        }
+
+        [TestMethod]
+        public void Replace_All_Replaces_Recursively()
+        {
+            var str = "     spaces     spaces   spaces          spaces  spaces";
+            var replaced = str.ReplaceAll("  ", "");
+            Assert.IsFalse(replaced.Contains("  "));
+            replaced = str.ReplaceAll("Z","Y");
+            Assert.AreEqual(str, replaced);
+        }
+
+
+
+        [TestMethod]
+        public void Ensure_Methods_Append_Correctly()
+        {
+            Assert.IsTrue("<html><body></body>".EnsureEndsWith("</html>").EndsWith("</html>"));
+            Assert.IsFalse("<html><body></body></html>".EnsureEndsWith("</html>").Contains("</html></html>"));
+
+            Assert.IsTrue("<body></body></html>".EnsureStartsWith("<html>").StartsWith("<html>"));
+            Assert.IsFalse("<html><body></body></html>".EnsureStartsWith("<html>").Contains("<html><html>"));
+        }
+
+        [TestMethod]
+        public void Truncate_String_Produces_Expected_Length()
+        {
+            Assert.IsTrue("12345".Truncate(4).Length == 4);
+            Assert.IsTrue("".Truncate(4).Length == 0);
+        }
+
+        [TestMethod]
+        public void String_Contains_Respects_Comparison()
+        {
+            Assert.IsTrue("ABCDE".Contains("bcd", StringComparison.CurrentCultureIgnoreCase));
+            Assert.IsFalse("ABCDE".Contains("bcd", StringComparison.CurrentCulture));
+            Assert.IsFalse(string.Empty.Contains("bcd", StringComparison.CurrentCultureIgnoreCase));
+            Assert.IsFalse(((string)null).Contains("bcd", StringComparison.CurrentCultureIgnoreCase));
         }
 
         [TestMethod]
@@ -352,6 +438,21 @@ namespace UnitTests
             decimal? nullDecimal = null;
             decimal? nonNullDecimal = 0.0m;
             Assert.IsNotNull(nullDecimal.Coalesce(nonNullDecimal));
+            Assert.AreEqual(nonNullDecimal.Coalesce(5.0m), nonNullDecimal);
+        }
+
+        [TestMethod]
+        public void Round_Up_Returns_Expected_Value()
+        {
+            decimal x = 0.0001m;
+            Assert.AreEqual(x.RoundUp(), 1);
+        }
+
+        [TestMethod]
+        public void Round_Down_Returns_Expected_Value()
+        {
+            decimal x = 1.9999m;
+            Assert.AreEqual(x.RoundDown(), 1);
         }
 
         [TestMethod]
@@ -361,6 +462,41 @@ namespace UnitTests
             Assert.IsTrue(rnd.NextLong(100) <= 100);
             Assert.IsTrue(rnd.NextLong(50, 100) <= 100 && rnd.NextLong(50, 100) >= 50);
         }
+
+        [TestMethod]
+        public void Byte_Array_To_Hex_Converts_Back_To_Original_Value()
+        {
+            var originalString = "123456";
+            var bytes = Encoding.UTF8.GetBytes(originalString);
+            var hex = bytes.ToHex();// BitConverter.ToString(bytes);
+            
+            var bytes2 = Enumerable.Range(0, hex.Length)
+                     .Where(x => x % 2 == 0)
+                     .Select(x => Convert.ToByte(hex.Substring(x, 2), 16))
+                     .ToArray();
+            Assert.AreEqual(Encoding.UTF8.GetString(bytes2), originalString); 
+            Assert.AreEqual((new byte[0]).ToHex(), string.Empty);
+        }
         #endregion
+
+        #region Timespan tests
+        [TestMethod]
+        public void One_Second_Equals_One_Million_Nanoseconds()
+        {
+            var timespan = TimeSpan.FromSeconds(1);
+            // 1 million
+            Assert.AreEqual(timespan.TotalMicroseconds(), 1000000);
+        }
+
+        [TestMethod]
+        public void One_Second_Equals_One_Billion_Microseconds()
+        {
+            var timespan = TimeSpan.FromSeconds(1);
+            // 10 million
+            var totalNanoseconds = timespan.TotalNanoseconds();
+            Assert.AreEqual(totalNanoseconds, 1000000000);
+        }
+        #endregion
+
     }
 }

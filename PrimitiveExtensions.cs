@@ -167,7 +167,7 @@ namespace Funcular.ExtensionMethods
         /// <returns></returns>
         public static bool IsIn(this string value, params string[] others)
         {
-            if (others.HasContents() && value.HasValue())
+            if (others.HasContents() && value != null)
                 return others.Any(s => s.Equals(value, StringComparison.OrdinalIgnoreCase));
             return false;
         }
