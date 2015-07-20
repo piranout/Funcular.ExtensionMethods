@@ -266,6 +266,11 @@ namespace UnitTests
 
             Assert.IsTrue(strings.Contains("abcdefg") == false);
             Assert.IsTrue("abcdefg".ContainsAny(strings));
+            Assert.IsFalse(((string)null).ContainsAny(strings));
+            Assert.IsFalse(((string)null).ContainsAny(string.Empty));
+            Assert.IsFalse(string.Empty.ContainsAny(null));
+            Assert.IsFalse(strings.Contains(abcde.ToUpper(), caseSensitive: true));
+
         }
 
         [TestMethod]
@@ -439,6 +444,12 @@ namespace UnitTests
             decimal? nonNullDecimal = 0.0m;
             Assert.IsNotNull(nullDecimal.Coalesce(nonNullDecimal));
             Assert.AreEqual(nonNullDecimal.Coalesce(5.0m), nonNullDecimal);
+            // ReSharper disable once ExpressionIsAlwaysNull
+            Assert.AreEqual(nullDecimal.Coalesce(nullDecimal, nullDecimal), default(decimal));
+
+            Assert.AreEqual(((decimal?) null).Coalesce(new decimal?[] {}),default(decimal));
+            Assert.AreEqual(((decimal?)null).Coalesce(new decimal?[] { null, 5.0m }), 5.0m);
+
         }
 
         [TestMethod]
@@ -446,6 +457,8 @@ namespace UnitTests
         {
             decimal x = 0.0001m;
             Assert.AreEqual(x.RoundUp(), 1);
+            x = 2.000m;
+            Assert.AreEqual(x.RoundUp(), 2);
         }
 
         [TestMethod]
