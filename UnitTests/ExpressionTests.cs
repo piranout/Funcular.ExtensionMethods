@@ -55,7 +55,7 @@ namespace UnitTests
     [TestClass]
     public class ExpressionTests
     {
-        private readonly string[] _strings = {null, string.Empty, "0", " ", "a"};
+        private readonly string[] _strings = { null, string.Empty, "0", " ", "a" };
 
 
 
@@ -91,7 +91,7 @@ namespace UnitTests
         public void Enumerable_Has_Contents()
         {
             Assert.IsTrue(Enumerable.Range(0, 1).HasContents());
-            Assert.IsTrue(new List<string>(new[] {" "}).HasContents());
+            Assert.IsTrue(new List<string>(new[] { " " }).HasContents());
         }
 
         [TestMethod]
@@ -110,6 +110,41 @@ namespace UnitTests
             Assert.IsTrue(things.OrderBy("String1", desc: true).First().String1 == "Z9");
             Assert.IsTrue(things.OrderBy("String2").First().String2 == "A1");
             Assert.IsTrue(things.OrderBy("String2", desc: true).First().String2 == "ZZ");
+
+            things = Enumerable.Empty<DerivedThing>().ToArray();
+            Assert.IsFalse(things.OrderBy("String1").HasContents());
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(ArgumentNullException), AllowDerivedTypes = true)]
+        public void Order_By_Throws_When_Parameter_Is_Null()
+        {
+            var things = new List<DerivedThing>
+            {
+                new DerivedThing {String1 = "A1", String2 = "Z9"},
+                new DerivedThing {String1 = "00", String2 = "ZZ"},
+                new DerivedThing {String1 = "Z9", String2 = "A1", String3 = "Blah", String4 = "Ignore me"}
+            }.ToArray();
+            var ordered = things.OrderBy(orderByProperty: "zasdgkha");
+            Console.WriteLine(ordered);
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(ArgumentNullException), AllowDerivedTypes = true)]
+        public void Order_By_Throws_When_Value_Is_Null()
+        {
+            // ReSharper disable once RedundantAssignment
+            var things = new List<DerivedThing>
+            {
+                new DerivedThing {String1 = "A1", String2 = "Z9"},
+                new DerivedThing {String1 = "00", String2 = "ZZ"},
+                new DerivedThing {String1 = "Z9", String2 = "A1", String3 = "Blah", String4 = "Ignore me"}
+            }.ToArray();
+            things = null;
+
+            // ReSharper disable once ExpressionIsAlwaysNull
+            var ordered = things.OrderBy(orderByProperty: "String1");
+            Console.WriteLine(ordered);
         }
 
         [TestMethod]
@@ -126,7 +161,7 @@ namespace UnitTests
         {
             IEnumerable<int> ints = Enumerable.Range(1, 10);
             var array = ints.ToArray();
-            IEnumerable<Thing> things = array.Select(t => new Thing(){Int1 = t, Int2 = t});
+            IEnumerable<Thing> things = array.Select(t => new Thing() { Int1 = t, Int2 = t });
             // ReSharper disable PossibleInvalidOperationException
             var median = things.Median(x => x.Int1).Value;
             Assert.IsTrue(median == 5.5m);
@@ -136,7 +171,22 @@ namespace UnitTests
             median = things.Median(x => x.Int1).Value;
             // ReSharper restore PossibleInvalidOperationException
             Assert.IsTrue(median == 6);
-            
+
+            IEnumerable<int?> nullableInts;
+            nullableInts = array.Select(i => (int?)i).AsEnumerable();
+            var mid = nullableInts.Median();
+            Assert.IsTrue(mid == 5.5m);
+
+            nullableInts = Enumerable.Empty<int?>();
+            mid = nullableInts.Median();
+            Assert.IsNull(mid);
+
+            var list = nullableInts.ToList();
+            list[8] = null;
+            Assert.IsNull(nullableInts.Median());
+
+            Assert.IsNull(Enumerable.Empty<int>().Median());
+
         }
         #endregion
 
@@ -151,7 +201,7 @@ namespace UnitTests
             Debug.WriteLine(expr);
 
             var treeModifier = new CaseInsensitiveExpressionVisitor();
-            var modifiedExpr = (Expression<Func<string, string, bool>>) treeModifier.Modify(expr);
+            var modifiedExpr = (Expression<Func<string, string, bool>>)treeModifier.Modify(expr);
 
             Debug.WriteLine(modifiedExpr);
             var modifiedExpr2 = modifiedExpr.Compile();
@@ -183,9 +233,9 @@ namespace UnitTests
             Assert.IsTrue(caseInsensitiveQueryable.Count(thing => thing.Int2 > thing.Int1) == 2);
             foreach (var thing in caseInsensitiveQueryable)
             {
-               Assert.IsTrue(thing.Int2 > thing.Int1);   
+                Assert.IsTrue(thing.Int2 > thing.Int1);
             }
-            
+
             Expression<Func<Thing, bool>> expr = (s1) => s1.String1 != s1.String2;
 
             var execute = caseInsensitiveQueryable.Provider.Execute(expr);
@@ -194,7 +244,7 @@ namespace UnitTests
             Assert.IsNotNull(caseInsensitiveQueryable.ElementType);
             Assert.IsNotNull(caseInsensitiveQueryable.Expression);
             Assert.IsNotNull(((IEnumerable)caseInsensitiveQueryable).GetEnumerator());
-            
+
         }
 
 
@@ -223,14 +273,14 @@ namespace UnitTests
         [TestMethod]
         public void Coalesce_Null_Strings_Is_Null()
         {
-            var nullString = ((string) null);
+            var nullString = ((string)null);
             Assert.IsNull(nullString.Coalesce(nullString, nullString));
         }
 
         [TestMethod]
         public void Coalesce_Strings_Is_Not_Null()
         {
-            var nullString = ((string) null);
+            var nullString = ((string)null);
             Assert.IsNotNull(nullString.Coalesce(string.Empty));
             // Should prefer the space to the empty string:
             Assert.IsTrue(string.Empty.Coalesce(" ") == " ");
@@ -251,13 +301,13 @@ namespace UnitTests
         public void Strings_Contain_Others()
         {
 #pragma warning disable 219
-            var nullString = ((string) null);
+            var nullString = ((string)null);
 #pragma warning restore 219
             var space = " ";
             var abc = "abc";
             var abcde = "abcde";
 
-            var strings = new[] {space, abc, abcde};
+            var strings = new[] { space, abc, abcde };
 
             Assert.IsTrue(strings.Contains(abc));
             Assert.IsTrue(strings.Contains(abc.ToUpper()));
@@ -296,7 +346,7 @@ namespace UnitTests
         [TestMethod]
         public void Trim_Null_Or_Empty_Is_Empty()
         {
-            var nullString = (string) null;
+            var nullString = (string)null;
             Assert.IsNotNull(nullString.TrimOrEmpty());
         }
 
@@ -334,7 +384,7 @@ namespace UnitTests
         [TestMethod]
         public void Is_In_Includes_Excludes()
         {
-            Assert.IsTrue("a".IsIn("c","b","a"));
+            Assert.IsTrue("a".IsIn("c", "b", "a"));
             Assert.IsTrue("A".IsIn("c", "b", "a"));
             Assert.IsFalse("z".IsIn("c", "b", "a"));
 
@@ -351,7 +401,7 @@ namespace UnitTests
         {
             Assert.IsTrue("12345-0000".IsUsZipCode());
             Assert.IsTrue("60611".IsUsZipCode());
-            
+
             Assert.IsFalse("6061".IsUsZipCode());
             Assert.IsFalse("6061a".IsUsZipCode());
             Assert.IsFalse(((string)null).IsUsZipCode());
@@ -379,12 +429,12 @@ namespace UnitTests
         public void RightOf_Strings_Locate_Correct_Values()
         {
             Assert.IsTrue("<html><body>".RightOfFirst("<html>") == "<body>");
-            Assert.AreSame(((string) null).RightOfFirst("<body>"), string.Empty);
+            Assert.AreSame(((string)null).RightOfFirst("<body>"), string.Empty);
             Assert.AreSame("".RightOfFirst("<body>"), string.Empty);
             Assert.AreSame(" ".RightOfFirst("<body>"), string.Empty);
 
             Assert.IsTrue("<html><head><body><div><div></div></div>".RightOfLast("<div>") == "</div></div>");
-            Assert.AreSame(((string) null).RightOfLast("<div>"), string.Empty);
+            Assert.AreSame(((string)null).RightOfLast("<div>"), string.Empty);
             Assert.AreSame("".RightOfLast("<div>"), string.Empty);
             Assert.AreSame(" ".RightOfLast("<div>"), string.Empty);
         }
@@ -405,7 +455,7 @@ namespace UnitTests
             var str = "     spaces     spaces   spaces          spaces  spaces";
             var replaced = str.ReplaceAll("  ", "");
             Assert.IsFalse(replaced.Contains("  "));
-            replaced = str.ReplaceAll("Z","Y");
+            replaced = str.ReplaceAll("Z", "Y");
             Assert.AreEqual(str, replaced);
         }
 
@@ -447,7 +497,7 @@ namespace UnitTests
             // ReSharper disable once ExpressionIsAlwaysNull
             Assert.AreEqual(nullDecimal.Coalesce(nullDecimal, nullDecimal), default(decimal));
 
-            Assert.AreEqual(((decimal?) null).Coalesce(new decimal?[] {}),default(decimal));
+            Assert.AreEqual(((decimal?)null).Coalesce(new decimal?[] { }), default(decimal));
             Assert.AreEqual(((decimal?)null).Coalesce(new decimal?[] { null, 5.0m }), 5.0m);
 
         }
@@ -482,12 +532,12 @@ namespace UnitTests
             var originalString = "123456";
             var bytes = Encoding.UTF8.GetBytes(originalString);
             var hex = bytes.ToHex();// BitConverter.ToString(bytes);
-            
+
             var bytes2 = Enumerable.Range(0, hex.Length)
                      .Where(x => x % 2 == 0)
                      .Select(x => Convert.ToByte(hex.Substring(x, 2), 16))
                      .ToArray();
-            Assert.AreEqual(Encoding.UTF8.GetString(bytes2), originalString); 
+            Assert.AreEqual(Encoding.UTF8.GetString(bytes2), originalString);
             Assert.AreEqual((new byte[0]).ToHex(), string.Empty);
         }
         #endregion

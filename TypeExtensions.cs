@@ -57,7 +57,9 @@ namespace Funcular.ExtensionMethods
             {
                 _propertyCache[type.FullName].Add(property.Name.ToUpper(), property);
             }
-            return _propertyCache[type.FullName];
+            if (_propertyCache.ContainsKey(type.FullName))
+                return _propertyCache[type.FullName];
+            return null;
         }
 
         public static PropertyInfo GetCachedProperty(this Type type, string propertyName)
