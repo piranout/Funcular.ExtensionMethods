@@ -251,11 +251,20 @@ namespace Funcular.ExtensionMethods
         ///     Casts an IEnumerable from one type to a another type, with null pointer protection.
         /// </summary>
         /// <typeparam name="TTarget"></typeparam>
+        /// <typeparam name="TSource"></typeparam>
         /// <param name="source"></param>
         /// <returns></returns>
-        public static IEnumerable<TTarget> SafeCast<TTarget>(this IEnumerable source)
+        public static IEnumerable<TTarget> SafeCast<TSource,TTarget>(this IEnumerable<TSource> source)
         {
-            return source == null ? null : source.Cast<TTarget>();
+
+            try
+            {
+                return source.HasContents() == false ? Enumerable.Empty<TTarget>() : source.Cast<TTarget>().ToList();
+            }
+            catch (InvalidCastException e)
+            {
+                return Enumerable.Empty<TTarget>();
+            }
         }
 
         /// <summary>
