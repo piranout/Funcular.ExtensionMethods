@@ -263,6 +263,7 @@ namespace Funcular.ExtensionMethods
             }
             catch (InvalidCastException e)
             {
+                Debug.WriteLine(e);
                 return Enumerable.Empty<TTarget>();
             }
         }
