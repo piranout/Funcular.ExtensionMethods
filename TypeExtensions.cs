@@ -57,14 +57,17 @@ namespace Funcular.ExtensionMethods
             {
                 _propertyCache[type.FullName].Add(property.Name.ToUpper(), property);
             }
-            if (_propertyCache.ContainsKey(type.FullName))
-                return _propertyCache[type.FullName];
-            return null;
+            return _propertyCache[type.FullName];
+            
         }
 
         public static PropertyInfo GetCachedProperty(this Type type, string propertyName)
         {
-            return type.GetCachedProperties()[propertyName.ToUpper()];
+            if (type.GetCachedProperties().ContainsKey(propertyName.ToUpper()))
+                return type.GetCachedProperties()[propertyName.ToUpper()];
+            if(type.BaseType != null)
+                return GetCachedProperty(type.BaseType, propertyName);
+            return null;
         }
     }
 }

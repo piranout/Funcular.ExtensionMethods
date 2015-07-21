@@ -95,7 +95,7 @@ namespace Funcular.ExtensionMethods
             var type = typeof (TEntity);
             var property = type.GetCachedProperty(orderByProperty);
             var parameter = Expression.Parameter(type, "p");
-            if (parameter == null || property == null)
+            if (property == null)
                 throw new ArgumentNullException("Unable to order by property named [" + orderByProperty + "]. Check to ensure this property exists in your IEnumerable.");
             
 

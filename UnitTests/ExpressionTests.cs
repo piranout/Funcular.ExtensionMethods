@@ -144,7 +144,6 @@ namespace UnitTests
 
             // ReSharper disable once ExpressionIsAlwaysNull
             var ordered = things.OrderBy(orderByProperty: "String1");
-            Console.WriteLine(ordered);
         }
 
         [TestMethod]
@@ -175,25 +174,21 @@ namespace UnitTests
             IEnumerable<int?> nullableInts;
             nullableInts = array.Select(i => (int?)i).AsEnumerable();
             var mid = nullableInts.Median();
-            Assert.IsTrue(mid == 5.5m);
+            Assert.IsTrue(mid == 6m);
 
             nullableInts = Enumerable.Empty<int?>();
             mid = nullableInts.Median();
             Assert.IsNull(mid);
-
-            var list = nullableInts.ToList();
-            list[8] = null;
-            Assert.IsNull(nullableInts.Median());
 
             Assert.IsNull(Enumerable.Empty<int>().Median());
 
         }
 
         [TestMethod]
-        public void Enumerable_Safe_Cast_Succeeds()
+        public void Enumerable_Safe_Cast_Fails_Gracefully()
         {
             IEnumerable<int> ints = Enumerable.Range(0, 10);
-            Assert.AreEqual(ints.SafeCast<int,string>().Count(), 11);
+            Assert.AreEqual(ints.SafeCast<int,string>().Count(), 0);
         }
 
         [TestMethod]
