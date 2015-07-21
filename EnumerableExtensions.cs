@@ -97,6 +97,7 @@ namespace Funcular.ExtensionMethods
             var parameter = Expression.Parameter(type, "p");
             if (parameter == null || property == null)
                 throw new ArgumentNullException("Unable to order by property named [" + orderByProperty + "]. Check to ensure this property exists in your IEnumerable.");
+            
 
             MemberExpression propertyAccess = Expression.MakeMemberAccess(parameter, property);
             LambdaExpression orderByExpression = Expression.Lambda(propertyAccess, parameter);
