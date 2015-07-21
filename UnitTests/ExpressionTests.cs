@@ -138,6 +138,22 @@ namespace UnitTests
             Assert.IsTrue(median == 6);
             
         }
+
+        [TestMethod]
+        public void Enumerable_Safe_Cast_Succeeds()
+        {
+            IEnumerable<int> ints = Enumerable.Range(0, 10);
+            Assert.AreEqual(ints.SafeCast<int,string>().Count(), 11);
+        }
+
+        [TestMethod]
+        public void Enumerable_Safe_Cast_Does_Not_Throw()
+        {
+            IEnumerable<int> ints = Enumerable.Range(0, 10);
+            IEnumerable<string> strings = ints.Select(i => i.ToString());
+            var dateTimes = strings.SafeCast<string, DateTime>().ToList();
+            Assert.IsFalse(dateTimes.HasContents());
+        }
         #endregion
 
 
