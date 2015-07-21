@@ -183,22 +183,6 @@ namespace UnitTests
             Assert.IsNull(Enumerable.Empty<int>().Median());
 
         }
-
-        [TestMethod]
-        public void Enumerable_Safe_Cast_Fails_Gracefully()
-        {
-            IEnumerable<int> ints = Enumerable.Range(0, 10);
-            Assert.AreEqual(ints.SafeCast<int,string>().Count(), 0);
-        }
-
-        [TestMethod]
-        public void Enumerable_Safe_Cast_Does_Not_Throw()
-        {
-            IEnumerable<int> ints = Enumerable.Range(0, 10);
-            IEnumerable<string> strings = ints.Select(i => i.ToString());
-            var dateTimes = strings.SafeCast<string, DateTime>().ToList();
-            Assert.IsFalse(dateTimes.HasContents());
-        }
         #endregion
 
 
