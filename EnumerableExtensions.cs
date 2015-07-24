@@ -45,7 +45,7 @@ using System.Globalization;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
-
+using System.Runtime.CompilerServices;
 #endregion
 
 
@@ -92,17 +92,17 @@ namespace Funcular.ExtensionMethods
             bool desc = false)
         {
             var command = desc ? "OrderByDescending" : "OrderBy";
-            var type = typeof (TEntity);
+            var type = typeof(TEntity);
             var property = type.GetCachedProperty(orderByProperty);
             var parameter = Expression.Parameter(type, "p");
             if (property == null)
                 throw new ArgumentNullException("Unable to order by property named [" + orderByProperty + "]. Check to ensure this property exists in your IEnumerable.");
-            
+
 
             MemberExpression propertyAccess = Expression.MakeMemberAccess(parameter, property);
             LambdaExpression orderByExpression = Expression.Lambda(propertyAccess, parameter);
             TEntity[] array = source as TEntity[] ?? source.ToArray();
-            MethodCallExpression resultExpression = Expression.Call(typeof (Queryable), command, new[] {type, property.PropertyType},
+            MethodCallExpression resultExpression = Expression.Call(typeof(Queryable), command, new[] { type, property.PropertyType },
                 array.AsQueryable().Expression, Expression.Quote(orderByExpression));
             return array.AsQueryable().Provider.CreateQuery<TEntity>(resultExpression);
         }
@@ -119,9 +119,6 @@ namespace Funcular.ExtensionMethods
         /// <returns></returns>
         public static IEnumerable<T> GetPagedResults<T>(this IEnumerable<T> results, int pageSize, int page, string sort = "", string sortDir = "")
         {
-            //results.OrderByDescending (column name)
-
-            //var sortBy = string.Format("{0} {1}", sort, sortDir);
             if (sort != "")
             {
                 bool isAscendingSort = !(sortDir != null && sortDir.ToLower().Contains("desc"));
@@ -129,7 +126,7 @@ namespace Funcular.ExtensionMethods
             }
 
             if (page > 1)
-                results = results.Skip((page - 1)*pageSize);
+                results = results.Skip((page - 1) * pageSize);
 
             return results.Take(pageSize);
         }
@@ -205,7 +202,7 @@ namespace Funcular.ExtensionMethods
         /// <returns></returns>
         public static decimal? Median<T>(this IEnumerable<T> source)
         {
-            if (Nullable.GetUnderlyingType(typeof (T)) != null)
+            if (Nullable.GetUnderlyingType(typeof(T)) != null)
                 source = source.Where(x => x != null);
             source = source.OrderBy(n => n);
             T[] array = (source.ToArray());
@@ -214,9 +211,9 @@ namespace Funcular.ExtensionMethods
                 return null;
             //source = array.OrderBy(n => n);
 
-            int midpoint = count/2;
-            if (count%2 == 0)
-                return (Convert.ToDecimal(array.ElementAt(midpoint - 1)) + Convert.ToDecimal(array.ElementAt(midpoint)))/2.0M;
+            int midpoint = count / 2;
+            if (count % 2 == 0)
+                return (Convert.ToDecimal(array.ElementAt(midpoint - 1)) + Convert.ToDecimal(array.ElementAt(midpoint))) / 2.0M;
             else
                 return Convert.ToDecimal(array.ElementAt(midpoint));
         }
@@ -255,10 +252,10 @@ namespace Funcular.ExtensionMethods
         /// <returns></returns>
         public static List<T> EnumToList<T>()
         {
-            Type enumType = typeof (T);
+            Type enumType = typeof(T);
 
             // Can't use type constraints on value types, so have to do check like this
-            if (enumType.BaseType != typeof (Enum))
+            if (enumType.BaseType != typeof(Enum))
                 throw new ArgumentException("T must be of type System.Enum");
             return new List<T>(Enum.GetValues(enumType) as IEnumerable<T>);
         }
@@ -274,9 +271,16 @@ namespace Funcular.ExtensionMethods
             return getFlags(value, Enum.GetValues(value.GetType()).Cast<Enum>().ToArray());
         }
 
+        /// <summary>
+        /// Use to decompose a Flags Enum *member* that itself is a bitwise combination
+        /// of other members of the same enum.
+        /// </summary>
+        /// <param name="value"></param>
+        /// <returns></returns>
         public static IEnumerable<Enum> GetIndividualFlags(this Enum value)
         {
-            return getFlags(value, getFlagValues(value.GetType()).ToArray());
+            var flags = getFlags(value, getFlagValues(value.GetType()).ToArray());
+            return flags.Where(f => (Convert.ToInt32(f) & Convert.ToInt32(value)) != 0);
         }
 
         private static IEnumerable<Enum> getFlags(Enum value, Enum[] values)
@@ -325,22 +329,53 @@ namespace Funcular.ExtensionMethods
             }
         }
 
-        public static string GetCallingMethodName()
+        /// <summary>
+        /// For .NET 4.0 and below. In .NET 4.5 and later, use the 
+        /// CallerNameAttribute instead.
+        /// </summary>
+        /// <returns></returns>
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        public static string GetCurrentMethodName()
         {
+            string ret = null;
             var stackTrace = new StackTrace(); // get call stack
             StackFrame[] stackFrames = stackTrace.GetFrames(); // get method calls (frames)
             int i = 0;
             // write call stack method names
-            if (stackFrames == null)
-                return null;
             foreach (var stackFrame in stackFrames)
             {
                 i++;
                 if (i >= 2)
-                    return stackFrame.GetMethod().Name;
+                {
+                    ret = stackFrame.GetMethod().Name;
+                    break;
+                }
             }
+            return ret;
+        }
 
-            return null;
+        /// <summary>
+        /// For .NET 4.0 and below. In .NET 4.5 and later, use the 
+        /// CallerNameAttribute instead.
+        /// </summary>
+        /// <returns></returns>
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        public static string GetCallingMethodName()
+        {
+            string ret = null;
+            var stackTrace = new StackTrace(); // get call stack
+            StackFrame[] stackFrames = stackTrace.GetFrames(); // get method calls (frames)
+            int i = 0;
+            foreach (var stackFrame in stackFrames)
+            {
+                i++;
+                if (i > 2)
+                {
+                    ret = stackFrame.GetMethod().Name;
+                    break;
+                }
+            }
+            return ret;
         }
 
         public static DateTime ToDateTime(this string val)

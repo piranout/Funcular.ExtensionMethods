@@ -41,6 +41,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Runtime.CompilerServices;
 using System.Text;
 using Funcular.ExtensionMethods;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -183,9 +184,132 @@ namespace UnitTests
             Assert.IsNull(Enumerable.Empty<int>().Median());
 
         }
+
+        [TestMethod]
+        public void Add_And_Preserves_Identity()
+        {
+            var strings = new string[] { "one", "two", "three" }.ToList();
+            strings
+                .AddAnd("four")
+                .Add("five");
+            Assert.AreEqual(strings.Count, 5);
+        }
+
+        [TestMethod]
+        public void Clear_And_Removes_All()
+        {
+            var strings = new string[] {"one", "two", "three"}.ToList();
+            strings.ClearAnd().Add("one");
+            Assert.AreEqual(strings.Count, 1);
+        }
+
+        [TestMethod]
+        public void Get_Flags_Returns_Correct_Values()
+        {
+            var roles = FlagsLikeRoles.User | FlagsLikeRoles.Editor;
+            var roleList = roles.GetFlags().ToArray();
+            Assert.IsTrue(roleList.Contains(FlagsLikeRoles.User));
+            Assert.IsTrue(roleList.Contains(FlagsLikeRoles.Editor));
+            Assert.AreEqual(roleList.Length, 2);
+        }
+
+        [TestMethod]
+        public void Get_Individual_Flags_Returns_Correct_Values()
+        {
+            var roles = FlagsLikeRoles.GuyWhoJustP0Wn3DYou;
+            var roleList = roles.GetIndividualFlags().ToArray();
+            Assert.IsTrue(roleList.Contains(FlagsLikeRoles.Administrator));
+            Assert.IsTrue(roleList.Contains(FlagsLikeRoles.SysAdmin));
+            Assert.AreEqual(roleList.Length, 4);
+
+            Assert.AreEqual(FlagsLikeRoles.None.GetIndividualFlags().Count(), 0);
+        }
+
+        [TestMethod]
+        public void Get_Paged_Results_Creates_Expected_Batch_Count()
+        {
+            var numbers = Enumerable.Range(1, 13).ToArray();
+            var things = new List<Thing>();
+            for (int i = 1; i <= numbers.Count(); i++)
+            {
+                things.Add(new DerivedThing() {Int1 = i, Int2 = -1*i, String1 = i.ToString(), String2 = (-1*1).ToString()});
+            }
+            var paged = things.GetPagedResults(3, 5, "String2").ToList();
+            Assert.AreEqual(paged.Count, 1);
+            Assert.AreEqual(paged[0].String2, ("-1"));
+            paged = things.GetPagedResults(3, 5, "Int1", "desc").ToList();
+            Assert.AreEqual(paged[0].Int1, 13);
+            paged = things.GetPagedResults(3, 5, "Int1", "asc").ToList();
+            Assert.AreEqual(paged[0].Int1, 1);
+        }
+
+        [TestMethod]
+        public void MaxBy_Returns_Expected_Max_Value()
+        {
+            var numbers = Enumerable.Range(1, 13).ToArray();
+            var things = new List<Thing>();
+            for (int i = 1; i <= numbers.Count(); i++)
+            {
+                things.Add(new DerivedThing() { Int1 = i, Int2 = -1 * i, String1 = i.ToString(), String2 = (-1 * 1).ToString() });
+            }
+            Assert.AreEqual(things.MaxBy(thing => thing.Int1).Int1, 13);
+            Assert.AreEqual(Enumerable.Empty<Thing>().MaxBy(thing => thing.Int1), null);
+        }
+
+        [TestMethod]
+        public void MinBy_Returns_Expected_Min_Value()
+        {
+            var numbers = Enumerable.Range(1, 13).ToArray();
+            var things = new List<Thing>();
+            for (int i = 1; i <= numbers.Count(); i++)
+            {
+                things.Add(new DerivedThing() { Int1 = i, Int2 = -1 * i, String1 = i.ToString(), String2 = (-1 * 1).ToString() });
+            }
+            var minThing = things.MinBy(thing => thing.Int2);
+            Assert.AreEqual(minThing.Int2, -13);
+            Assert.AreEqual(Enumerable.Empty<Thing>().MinBy(thing => thing.Int1), null);
+        }
+
+        [TestMethod]
+        public void Distinct_By_Is_Distinct()
+        {
+            HashSet<int> distinctnumbers = new HashSet<int>();
+            var numbers = Enumerable.Range(1, 13).ToArray();
+            var things = new List<Thing>();
+            for (int i = 1; i <= numbers.Count(); i++)
+            {
+                things.Add(new DerivedThing() { Int1 = i, Int2 = -1 * i, String1 = i.ToString(), String2 = (-1 * 1).ToString() });
+                things.Add(new DerivedThing() { Int1 = i, Int2 = -1 * i, String1 = i.ToString(), String2 = (-1 * 1).ToString() });
+            }
+            var distinctThings = things.DistinctBy(thing => thing.Int1);
+            foreach (var distinctThing in distinctThings)
+            {
+                Assert.IsTrue(distinctnumbers.Add(distinctThing.Int1));
+            }
+        }
         #endregion
 
+        #region Reflection and introspection
+        [TestMethod]
+        public void Get_Caller_Name_Returns_Correct_Name()
+        {
+            Assert.AreEqual(GetCallingMethodName().Item1, GetCallingMethodName().Item2);
+        }
 
+
+        [TestMethod]
+        public void Get_Current_Name_Returns_Correct_Name()
+        {
+            Assert.AreEqual(EnumerableExtensions.GetCurrentMethodName(), "Get_Current_Name_Returns_Correct_Name");
+        }
+
+        public Tuple<string,string> GetCallingMethodName([CallerMemberName] string caller = "")
+        {
+            var string1 = EnumerableExtensions.GetCallingMethodName();
+            var string2 = caller;
+            return new Tuple<string, string>(string1, string2);
+        }
+        #endregion
 
 
         #region Queryables
@@ -537,7 +661,7 @@ namespace UnitTests
         }
         #endregion
 
-        #region Timespan tests
+        #region Datetime and Timespan tests
         [TestMethod]
         public void One_Second_Equals_One_Million_Nanoseconds()
         {
@@ -571,7 +695,25 @@ namespace UnitTests
             Assert.AreEqual(y.Length, x.Count);
         }
 
-        
+        [TestMethod]
+        public void String_To_DateTime_Parses_YYYYMMDD()
+        {
+            var datestr = "20150722";
+            var date = datestr.ToDateTime();
+            Assert.AreEqual(date.Year, 2015);
+            Assert.AreEqual(date.Month, 7);
+            Assert.AreEqual(date.Day, 22);
+        }
+
+        [TestMethod]
+        public void String_To_DateTime_Parses_Value()
+        {
+            var datestr = "07/22/2015";
+            var date = datestr.ToDateTime();
+            Assert.AreEqual(date.Year, 2015);
+            Assert.AreEqual(date.Month, 7);
+            Assert.AreEqual(date.Day, 22);
+        }
         #endregion
 
     }
@@ -585,6 +727,6 @@ namespace UnitTests
         Editor = 4,
         Administrator = 8,
         SysAdmin = 16,
-        GuyWhoJustP0Wn3DYou = 32 
+        GuyWhoJustP0Wn3DYou = SysAdmin | Administrator | Editor | Moderator 
     }
 }
