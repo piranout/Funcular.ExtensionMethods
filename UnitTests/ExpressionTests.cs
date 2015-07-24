@@ -554,7 +554,37 @@ namespace UnitTests
             var totalNanoseconds = timespan.TotalNanoseconds();
             Assert.AreEqual(totalNanoseconds, 1000000000);
         }
+
+        [TestMethod]
+        [ExpectedException(typeof(ArgumentException))]
+        public void Enum_To_List_Throws_On_Non_Enum_Type()
+        {
+            var x = EnumerableExtensions.EnumToList<int>();
+            Assert.Fail("Should've had an exception here, dude.");
+        }
+
+        [TestMethod]
+        public void Enum_To_List_Returns_For_Enum_Type()
+        {
+            var y = Enum.GetNames(typeof (StringComparison));
+            var x = EnumerableExtensions.EnumToList<StringComparison>();
+            Assert.AreEqual(y.Length, x.Count);
+        }
+
+        
         #endregion
 
+    }
+
+    [Flags]
+    public enum FlagsLikeRoles
+    {
+        None = 0,
+        User = 1,
+        Moderator = 2,
+        Editor = 4,
+        Administrator = 8,
+        SysAdmin = 16,
+        GuyWhoJustP0Wn3DYou = 32 
     }
 }
