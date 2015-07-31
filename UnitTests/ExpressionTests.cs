@@ -684,7 +684,6 @@ namespace UnitTests
         public void Enum_To_List_Throws_On_Non_Enum_Type()
         {
             var x = EnumerableExtensions.EnumToList<int>();
-            Assert.Fail("Should've had an exception here, dude.");
         }
 
         [TestMethod]

@@ -299,8 +299,8 @@ namespace Funcular.ExtensionMethods
                 }
             }
 
-            if (bits != 0L)
-                return Enumerable.Empty<Enum>();
+/*            if (bits != 0L)
+                return Enumerable.Empty<Enum>();*/
             if (Convert.ToUInt64(value) != 0L)
                 return results.Reverse<Enum>();
             if (bits == Convert.ToUInt64(value) && values.Length > 0 && Convert.ToUInt64(values[0]) == 0L)
