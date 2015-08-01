@@ -66,6 +66,17 @@ namespace Funcular.ExtensionMethods
         /// </summary>
         /// <param name="value"></param>
         /// <returns></returns>
+        [Obsolete("Replaced by `IsNonWhitespace`; will be deprecated in next version")]
+        public static bool HasWordValue(this string value)
+        {
+            return !string.IsNullOrWhiteSpace(value);
+        }
+
+        /// <summary>
+        ///     The negation of string.IsNullOrWhitespace.
+        /// </summary>
+        /// <param name="value"></param>
+        /// <returns></returns>
         public static bool IsNonWhitespace(this string value)
         {
             return !string.IsNullOrWhiteSpace(value);

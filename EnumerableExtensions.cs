@@ -345,7 +345,8 @@ namespace Funcular.ExtensionMethods
 
         /// <summary>
         /// For .NET 4.0 and below. In .NET 4.5 and later, use the 
-        /// CallerNameAttribute instead.
+        /// CallerNameAttribute instead. . Note: In release mode, unit 
+        /// tests will fail because of test instrumentation.  
         /// </summary>
         /// <returns></returns>
         [MethodImpl(MethodImplOptions.NoInlining)]
@@ -370,7 +371,8 @@ namespace Funcular.ExtensionMethods
 
         /// <summary>
         /// For .NET 4.0 and below. In .NET 4.5 and later, use the 
-        /// CallerNameAttribute instead.
+        /// CallerNameAttribute instead. Note: In release mode, unit 
+        /// tests will fail because of test instrumentation.  
         /// </summary>
         /// <returns></returns>
         [MethodImpl(MethodImplOptions.NoInlining)]

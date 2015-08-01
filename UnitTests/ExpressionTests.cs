@@ -59,6 +59,13 @@ namespace UnitTests
         private readonly string[] _strings = { null, string.Empty, "0", " ", "a" };
 
 
+        /// <summary>
+        ///Gets or sets the test context which provides
+        ///information about and functionality for the current test run.
+        ///</summary>
+        public TestContext TestContext { get; set; }
+
+
 
 
         #region Nested type: Thing
@@ -293,7 +300,13 @@ namespace UnitTests
         [TestMethod]
         public void Get_Caller_Name_Returns_Correct_Name()
         {
-            Assert.AreEqual(GetCallingMethodName().Item1, GetCallingMethodName().Item2);
+            var expected = GetCallingMethodName().Item1;
+            var actual = GetCallingMethodName().Item2;
+            Trace.WriteLine("Expected: " + expected);
+            Trace.WriteLine("  Actual: " + actual);
+            TestContext.WriteLine("Expected: " + expected);
+            TestContext.WriteLine("  Actual: " + actual);
+            Assert.AreEqual(expected, actual);
         }
 
 
