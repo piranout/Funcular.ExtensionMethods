@@ -37,6 +37,7 @@
 
 using System;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.RegularExpressions;
 
@@ -46,6 +47,7 @@ namespace Funcular.ExtensionMethods
 {
     public static class PrimitiveExtensions
     {
+        private const StringComparison COMPARISON_TYPE = StringComparison.OrdinalIgnoreCase;
         private static readonly Regex _notNullOrWhitespace = new Regex(@"/^[\s]*$/", RegexOptions.Compiled);
 
         /// <summary>
@@ -53,6 +55,7 @@ namespace Funcular.ExtensionMethods
         /// </summary>
         /// <param name="value"></param>
         /// <returns></returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool HasValue(this string value)
         {
             return !string.IsNullOrEmpty(value);
@@ -86,6 +89,7 @@ namespace Funcular.ExtensionMethods
         /// <param name="value"></param>
         /// <param name="others"></param>
         /// <returns></returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static string Coalesce(this string value, params string[] others)
         {
             var strings = new string[]{value}.Union(others).ToArray();
@@ -101,6 +105,7 @@ namespace Funcular.ExtensionMethods
         /// <param name="value"></param>
         /// <param name="others"></param>
         /// <returns></returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static decimal Coalesce(this decimal? value, params decimal?[] others)
         {
             if (value.HasValue)
@@ -136,6 +141,7 @@ namespace Funcular.ExtensionMethods
         /// <param name="sought"></param>
         /// <param name="caseSensitive"></param>
         /// <returns></returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool Contains(this string[] values, string sought, bool caseSensitive = false)
         {
             return caseSensitive 
@@ -152,6 +158,7 @@ namespace Funcular.ExtensionMethods
         /// <param name="find"></param>
         /// <param name="comparison"></param>
         /// <returns></returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool Contains(this string value, string find, StringComparison comparison)
         {
             if (value == null || find == null)
@@ -168,7 +175,7 @@ namespace Funcular.ExtensionMethods
         public static bool IsIn(this string value, params string[] others)
         {
             if (others.HasContents() && value != null)
-                return others.Any(s => s.Equals(value, StringComparison.OrdinalIgnoreCase));
+                return others.Any(s => s.Equals(value, COMPARISON_TYPE));
             return false;
         }
 
@@ -181,8 +188,7 @@ namespace Funcular.ExtensionMethods
         /// <returns></returns>
         public static string ReplaceAll(this string haystack, string needle, string replacement)
         {
-            const StringComparison COMPARISON = StringComparison.Ordinal;
-            while (haystack.IndexOf(needle, COMPARISON) > -1)
+            while (haystack.IndexOf(needle, COMPARISON_TYPE) > -1)
                 haystack = haystack.Replace(needle, replacement);
             return haystack;
         }
@@ -192,6 +198,7 @@ namespace Funcular.ExtensionMethods
         /// </summary>
         /// <param name="incomingNumber"></param>
         /// <returns></returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static string ToNumericString(this string incomingNumber)
         {
             if (!incomingNumber.HasValue())
@@ -232,6 +239,7 @@ namespace Funcular.ExtensionMethods
         /// <param name="originalString"></param>
         /// <param name="ofString"></param>
         /// <returns></returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static string LeftOfFirst(this string originalString, string ofString)
         {
             if (string.IsNullOrEmpty(originalString))
@@ -247,6 +255,7 @@ namespace Funcular.ExtensionMethods
         /// <param name="originalString"></param>
         /// <param name="ofString"></param>
         /// <returns></returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static string LeftOfLast(this string originalString, string ofString)
         {
             if (string.IsNullOrEmpty(originalString))
@@ -263,6 +272,7 @@ namespace Funcular.ExtensionMethods
         /// <param name="originalString"></param>
         /// <param name="ofString"></param>
         /// <returns></returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static string RightOfLast(this string originalString, string ofString)
         {
             if (string.IsNullOrEmpty(originalString))
@@ -281,6 +291,7 @@ namespace Funcular.ExtensionMethods
         /// <param name="originalString"></param>
         /// <param name="ofString"></param>
         /// <returns></returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static string RightOfFirst(this string originalString, string ofString)
         {
             if (string.IsNullOrEmpty(originalString))
@@ -306,6 +317,7 @@ namespace Funcular.ExtensionMethods
         ///     If value ends with digits, returns as many ending characters as are digits,
         ///     otherwise, returns -1.
         /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int GetIntegerSuffix(this string value)
         {
             var ret = -1;

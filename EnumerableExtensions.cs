@@ -63,6 +63,7 @@ namespace Funcular.ExtensionMethods
         /// <typeparam name="T"></typeparam>
         /// <param name="enumerable"></param>
         /// <returns></returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool HasContents<T>(this IEnumerable<T> enumerable)
         {
             return enumerable != null && enumerable.Any();
@@ -75,6 +76,7 @@ namespace Funcular.ExtensionMethods
         /// <typeparam name="T"></typeparam>
         /// <param name="enumerable"></param>
         /// <returns></returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static IEnumerable<T> OrEmpty<T>(this IEnumerable<T> enumerable)
         {
             return enumerable ?? Enumerable.Empty<T>();
@@ -88,6 +90,7 @@ namespace Funcular.ExtensionMethods
         /// <param name="orderByProperty">Name of property to sort by</param>
         /// <param name="desc">Descending if true</param>
         /// <returns></returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static IEnumerable<TEntity> OrderBy<TEntity>(this IEnumerable<TEntity> source, string orderByProperty,
             bool desc = false)
         {
@@ -117,6 +120,7 @@ namespace Funcular.ExtensionMethods
         /// <param name="sort"></param>
         /// <param name="sortDir"></param>
         /// <returns></returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static IEnumerable<T> GetPagedResults<T>(this IEnumerable<T> results, int pageSize, int page, string sort = "", string sortDir = "")
         {
             if (sort != "")
@@ -139,6 +143,7 @@ namespace Funcular.ExtensionMethods
         /// <param name="source"></param>
         /// <param name="selector"></param>
         /// <returns></returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static TEntity MaxBy<TEntity, TKey>(this IEnumerable<TEntity> source, Func<TEntity, TKey> selector) where TEntity : class
         {
             if (!source.HasContents())
@@ -155,6 +160,7 @@ namespace Funcular.ExtensionMethods
         /// <param name="source"></param>
         /// <param name="selector"></param>
         /// <returns></returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static TEntity MinBy<TEntity, TKey>(this IEnumerable<TEntity> source, Func<TEntity, TKey> selector) where TEntity : class
         {
             if (!source.HasContents())
@@ -171,6 +177,7 @@ namespace Funcular.ExtensionMethods
         /// <param name="source"></param>
         /// <param name="selector"></param>
         /// <returns></returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static IEnumerable<TSource> DistinctBy<TSource, TKey>(this IEnumerable<TSource> source, Func<TSource, TKey> selector) where TSource : class
         {
             var keys = new HashSet<TKey>();
@@ -200,6 +207,7 @@ namespace Funcular.ExtensionMethods
         /// <typeparam name="T"></typeparam>
         /// <param name="source"></param>
         /// <returns></returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static decimal? Median<T>(this IEnumerable<T> source)
         {
             if (Nullable.GetUnderlyingType(typeof(T)) != null)
@@ -225,6 +233,7 @@ namespace Funcular.ExtensionMethods
         /// <typeparam name="T"></typeparam>
         /// <param name="list"></param>
         /// <returns></returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static List<T> ClearAnd<T>(this List<T> list)
         {
             list.Clear();
@@ -239,6 +248,7 @@ namespace Funcular.ExtensionMethods
         /// <param name="list"></param>
         /// <param name="item"></param>
         /// <returns></returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static List<T> AddAnd<T>(this List<T> list, T item)
         {
             list.Add(item);
@@ -250,6 +260,7 @@ namespace Funcular.ExtensionMethods
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <returns></returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static List<T> EnumToList<T>()
         {
             Type enumType = typeof(T);
@@ -266,6 +277,7 @@ namespace Funcular.ExtensionMethods
         /// </summary>
         /// <param name="value"></param>
         /// <returns></returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static IEnumerable<Enum> GetFlags(this Enum value)
         {
             return getFlags(value, Enum.GetValues(value.GetType()).Cast<Enum>().ToArray());
@@ -277,6 +289,7 @@ namespace Funcular.ExtensionMethods
         /// </summary>
         /// <param name="value"></param>
         /// <returns></returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static IEnumerable<Enum> GetIndividualFlags(this Enum value)
         {
             var flags = getFlags(value, getFlagValues(value.GetType()).ToArray());
@@ -313,6 +326,7 @@ namespace Funcular.ExtensionMethods
         /// </summary>
         /// <param name="enumType"></param>
         /// <returns></returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static IEnumerable<Enum> getFlagValues(Type enumType)
         {
             ulong flag = 0x1;
@@ -378,6 +392,7 @@ namespace Funcular.ExtensionMethods
             return ret;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static DateTime ToDateTime(this string val)
         {
             val = val.Trim();
