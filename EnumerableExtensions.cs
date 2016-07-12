@@ -3,7 +3,7 @@
 // *********************************************************************************************************
 // Funcular.ExtensionMethods>Funcular.ExtensionMethods>EnumerableExtensions.cs
 // Created: 2015-06-26 3:03 PM
-// Updated: 2015-06-29 10:46 AM
+// Updated: 2016-07-10 10:46 AM
 // By: Paul Smith 
 // 
 // *********************************************************************************************************
@@ -136,23 +136,6 @@ namespace Funcular.ExtensionMethods
         }
 
         /// <summary>
-        ///     Returns the enumerable member having the highest value of <paramref name="selector" />
-        /// </summary>
-        /// <typeparam name="TEntity"></typeparam>
-        /// <typeparam name="TKey"></typeparam>
-        /// <param name="source"></param>
-        /// <param name="selector"></param>
-        /// <returns></returns>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static TEntity MaxBy<TEntity, TKey>(this IEnumerable<TEntity> source, Func<TEntity, TKey> selector) where TEntity : class
-        {
-            if (!source.HasContents())
-                return null;
-            return source.OrderByDescending(selector)
-                .FirstOrDefault();
-        }
-
-        /// <summary>
         ///     Returns the enumerable member having the lowest value of <paramref name="selector" />
         /// </summary>
         /// <typeparam name="TEntity"></typeparam>
@@ -163,36 +146,51 @@ namespace Funcular.ExtensionMethods
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static TEntity MinBy<TEntity, TKey>(this IEnumerable<TEntity> source, Func<TEntity, TKey> selector) where TEntity : class
         {
-            if (!source.HasContents())
-                return null;
-            return source.OrderBy(selector)
+            return source?.OrderBy(selector)
                 .FirstOrDefault();
         }
 
         /// <summary>
-        ///     Returns the first item encountered for each distinct selector value.
+        ///     Returns the enumerable member having the highest value of <paramref name="selector" />
         /// </summary>
-        /// <typeparam name="TSource"></typeparam>
+        /// <typeparam name="TEntity"></typeparam>
         /// <typeparam name="TKey"></typeparam>
         /// <param name="source"></param>
         /// <param name="selector"></param>
         /// <returns></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static IEnumerable<TSource> DistinctBy<TSource, TKey>(this IEnumerable<TSource> source, Func<TSource, TKey> selector) where TSource : class
+        public static TEntity MaxBy<TEntity, TKey>(this IEnumerable<TEntity> source, Func<TEntity, TKey> selector) where TEntity : class
         {
-            var keys = new HashSet<TKey>();
-            foreach (var item in source)
-            {
-                if (keys.Add(selector(item)))
-                    yield return item;
-            }
+            return source?.OrderByDescending(selector)
+                .FirstOrDefault();
+        }
+
+        /// <summary>
+        ///     Returns the enumerable member having the median value of <paramref name="selector" />
+        /// </summary>
+        /// <typeparam name="TEntity"></typeparam>
+        /// <typeparam name="TKey"></typeparam>
+        /// <param name="source"></param>
+        /// <param name="selector"></param>
+        /// <returns></returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static TEntity MedianBy<TEntity, TKey>(this IEnumerable<TEntity> source, Func<TEntity, TKey> selector) where TEntity : class
+        {
+            if (source?.Any() != true)
+                return default(TEntity);
+            var array = source as TEntity[] ?? source.ToArray();
+            var count = array.Count();
+            var midpoint = (count / 2);
+            if (count%2 == 0)
+                midpoint--;
+            return array.OrderBy(selector).ElementAt(midpoint);
         }
 
         /// <summary>
         ///     Returns the median value of <paramref name="selector" /> among this Enumerable.
         /// </summary>
         /// <typeparam name="TColl"></typeparam>
-        /// <typeparam name="TValue"></typeparam>
+        /// <typeparam name="TValue">Must be assignable to decimal</typeparam>
         /// <param name="source"></param>
         /// <param name="selector"></param>
         /// <returns></returns>
@@ -202,7 +200,8 @@ namespace Funcular.ExtensionMethods
         }
 
         /// <summary>
-        ///     Returns the median Element in this Enumerable, using the default sort comparer.
+        ///     Returns the median value of Enumerable, assuming <typeparamref name="T"></typeparamref>
+        ///     can be cast to a decimal.
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="source"></param>
@@ -227,17 +226,39 @@ namespace Funcular.ExtensionMethods
         }
 
         /// <summary>
-        ///     Fluent syntax to enable constructs like
-        ///     <example>myList.ClearAnd().Add(something);</example>
+        ///     Returns the first item encountered for each distinct selector value.
         /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="list"></param>
+        /// <typeparam name="TSource"></typeparam>
+        /// <typeparam name="TKey"></typeparam>
+        /// <param name="source"></param>
+        /// <param name="selector"></param>
         /// <returns></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static List<T> ClearAnd<T>(this List<T> list)
+        public static IEnumerable<TSource> DistinctBy<TSource, TKey>(this IEnumerable<TSource> source, Func<TSource, TKey> selector) where TSource : class
         {
-            list.Clear();
-            return list;
+            var keys = new HashSet<TKey>();
+            foreach (var item in source)
+            {
+                if (keys.Add(selector(item)))
+                    yield return item;
+            }
+        }
+
+        /// <summary>
+        /// Supplies AddRange on ILists and ICollections, like Microsoft should have.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="originalCollection"></param>
+        /// <param name="addCollection"></param>
+        /// <returns></returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static ICollection<T> AddRange<T>(this ICollection<T> originalCollection, IEnumerable<T> addCollection)
+        {
+            foreach (var item in addCollection)
+            {
+                originalCollection.Add(item);
+            }
+            return originalCollection;
         }
 
         /// <summary>
@@ -253,6 +274,65 @@ namespace Funcular.ExtensionMethods
         {
             list.Add(item);
             return list;
+        }
+
+        /// <summary>
+        ///     Fluent syntax to enable constructs like
+        ///     <example>myList.ClearAnd().Add(something);</example>
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="list"></param>
+        /// <returns></returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static ICollection<T> ClearAnd<T>(this ICollection<T> list)
+        {
+            list.Clear();
+            return list;
+        }
+
+        /// <summary>
+        /// Clears a collection and replaces it with the supplied elements.
+        /// Useful for replacing readonly collections that you can't assign directly.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="originalCollection"></param>
+        /// <param name="replaceWith"></param>
+        /// <returns></returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static ICollection<T> ReplaceWith<T>(this ICollection<T> originalCollection, IEnumerable<T> replaceWith)
+        {
+            if (originalCollection == null)
+                return null;
+            originalCollection.Clear();
+            originalCollection.AddRange(replaceWith);
+            return originalCollection;
+        }
+
+
+
+        /// <summary>
+        /// Flattens any hierarchy of nodes and returns it as a collection.
+        /// All nodes will themselves have empty child item collections. 
+        /// If id assignment expression is provided, nodes will have the
+        /// proper parent id assigned. 
+        /// </summary>
+        public static IEnumerable<T> Flatten<T>(this IEnumerable<T> source, Func<T, IEnumerable<T>> childSelector, Action<T,T> parentIdAssigner = null)
+        {
+            var stack = new Stack<T>();
+            foreach (var item in source)
+            {
+                stack.Push(item);
+            }
+            while (stack.Count > 0)
+            {
+                var current = stack.Pop();
+                yield return current;
+                foreach (var childItem in childSelector(current))
+                {
+                    parentIdAssigner?.Invoke(childItem, current);
+                    stack.Push(childItem);
+                }
+            }
         }
 
         /// <summary>
@@ -296,6 +376,9 @@ namespace Funcular.ExtensionMethods
             return flags.Where(f => (Convert.ToInt32(f) & Convert.ToInt32(value)) != 0);
         }
 
+
+        #region Nonpublic methods
+
         private static IEnumerable<Enum> getFlags(Enum value, Enum[] values)
         {
             ulong bits = Convert.ToUInt64(value);
@@ -316,8 +399,8 @@ namespace Funcular.ExtensionMethods
                 return Enumerable.Empty<Enum>();*/
             if (Convert.ToUInt64(value) != 0L)
                 return results.Reverse<Enum>();
-            if (bits == Convert.ToUInt64(value) && values.Length > 0 && Convert.ToUInt64(values[0]) == 0L)
-                return values.Take(1);
+            /*if (bits == Convert.ToUInt64(value) && values.Length > 0 && Convert.ToUInt64(values[0]) == 0L)
+                return values.Take(1);*/
             return Enumerable.Empty<Enum>();
         }
 
@@ -343,62 +426,7 @@ namespace Funcular.ExtensionMethods
             }
         }
 
-        /// <summary>
-        /// For .NET 4.0 and below. In .NET 4.5 and later, use the 
-        /// CallerNameAttribute instead. . Note: In release mode, unit 
-        /// tests will fail because of test instrumentation.  
-        /// </summary>
-        /// <returns></returns>
-        [MethodImpl(MethodImplOptions.NoInlining)]
-        public static string GetCurrentMethodName()
-        {
-            string ret = null;
-            var stackTrace = new StackTrace(); // get call stack
-            StackFrame[] stackFrames = stackTrace.GetFrames(); // get method calls (frames)
-            int i = 0;
-            // write call stack method names
-            foreach (var stackFrame in stackFrames)
-            {
-                i++;
-                if (i >= 2)
-                {
-                    ret = stackFrame.GetMethod().Name;
-                    break;
-                }
-            }
-            return ret;
-        }
+        #endregion
 
-        /// <summary>
-        /// For .NET 4.0 and below. In .NET 4.5 and later, use the 
-        /// CallerNameAttribute instead. Note: In release mode, unit 
-        /// tests will fail because of test instrumentation.  
-        /// </summary>
-        /// <returns></returns>
-        [MethodImpl(MethodImplOptions.NoInlining)]
-        public static string GetCallingMethodName()
-        {
-            string ret = null;
-            var stackTrace = new StackTrace(); // get call stack
-            StackFrame[] stackFrames = stackTrace.GetFrames(); // get method calls (frames)
-            int i = 0;
-            foreach (var stackFrame in stackFrames)
-            {
-                i++;
-                if (i > 2)
-                {
-                    ret = stackFrame.GetMethod().Name;
-                    break;
-                }
-            }
-            return ret;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static DateTime ToDateTime(this string val)
-        {
-            val = val.Trim();
-            return val.Length == 8 ? (DateTime.ParseExact(val, "yyyyMMdd", CultureInfo.CurrentCulture)) : DateTime.Parse(val);
-        }
     }
 }

@@ -3,7 +3,7 @@
 // *********************************************************************************************************
 // Funcular.ExtensionMethods>Funcular.ExtensionMethods>PrimitiveExtensions.cs
 // Created: 2015-07-07 12:19 AM
-// Updated: 2015-07-18 9:34 AM
+// Updated: 2016-07-12 9:34 AM
 // By: Paul Smith 
 // 
 // *********************************************************************************************************
@@ -36,6 +36,7 @@
 #region Usings
 
 using System;
+using System.Globalization;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -58,18 +59,7 @@ namespace Funcular.ExtensionMethods
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool HasValue(this string value)
         {
-            return !string.IsNullOrEmpty(value);
-        }
-
-        /// <summary>
-        ///     The negation of string.IsNullOrWhitespace.
-        /// </summary>
-        /// <param name="value"></param>
-        /// <returns></returns>
-        [Obsolete("Replaced by `IsNonWhitespace`; will be deprecated in next version")]
-        public static bool HasWordValue(this string value)
-        {
-            return !string.IsNullOrWhiteSpace(value);
+            return !String.IsNullOrEmpty(value);
         }
 
         /// <summary>
@@ -79,7 +69,7 @@ namespace Funcular.ExtensionMethods
         /// <returns></returns>
         public static bool IsNonWhitespace(this string value)
         {
-            return !string.IsNullOrWhiteSpace(value);
+            return !String.IsNullOrWhiteSpace(value);
         }
 
         /// <summary>
@@ -129,7 +119,7 @@ namespace Funcular.ExtensionMethods
 
         public static string TrimOrEmpty(this string value)
         {
-            return (value ?? string.Empty).Trim();
+            return (value ?? String.Empty).Trim();
         }
 
         /// <summary>
@@ -138,10 +128,52 @@ namespace Funcular.ExtensionMethods
         /// <param name="value"></param>
         /// <param name="others"></param>
         /// <returns></returns>
+        [Obsolete("Replaced with `IsContainedByAny`; will be deprecated in a future release.", false)]
         public static bool ContainsAny(this string value, params string[] others)
         {
             return others.HasContents() && value.HasValue() &&
                    others.Any(s => value.IndexOf(s, StringComparison.OrdinalIgnoreCase) >= 0);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="value"></param>
+        /// <param name="stringComparison"></param>
+        /// <param name="others"></param>
+        /// <returns></returns>
+        [Obsolete("Replaced with `IsContainedByAny`; will be deprecated in a future release.", false)]
+        public static bool ContainsAny(this string value, StringComparison stringComparison, params string[] others)
+        {
+            return others.HasContents() && value.HasValue() &&
+                   others.Any(s => value.IndexOf(s, stringComparison) >= 0);
+        }
+
+
+
+        /// <summary>
+        ///     Returns true if string <paramref name="value" /> contains any of <paramref name="others" /> (case-insensitive).
+        /// </summary>
+        /// <param name="value"></param>
+        /// <param name="others"></param>
+        /// <returns></returns>
+        public static bool IsContainedByAny(this string value, params string[] others)
+        {
+            return others.HasContents() && value.HasValue() &&
+                   others.Any(s => value.IndexOf(s, StringComparison.OrdinalIgnoreCase) >= 0);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="value"></param>
+        /// <param name="stringComparison"></param>
+        /// <param name="others"></param>
+        /// <returns></returns>
+        public static bool IsContainedByAny(this string value, StringComparison stringComparison, params string[] others)
+        {
+            return others.HasContents() && value.HasValue() &&
+                   others.Any(s => value.IndexOf(s, stringComparison) >= 0);
         }
 
         /// <summary>
@@ -153,7 +185,7 @@ namespace Funcular.ExtensionMethods
         /// <param name="caseSensitive"></param>
         /// <returns></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool Contains(this string[] values, string sought, bool caseSensitive = false)
+        public static bool Contains(this string[] values, string sought, bool caseSensitive)
         {
             return caseSensitive 
                 ? values.AsQueryable().Any(s => s == sought) 
@@ -214,8 +246,8 @@ namespace Funcular.ExtensionMethods
         {
             if (!incomingNumber.HasValue())
                 return incomingNumber;
-            return string.Join("", incomingNumber.Split(incomingNumber
-                .Where(c => !char.IsNumber(c))
+            return String.Join("", incomingNumber.Split(incomingNumber
+                .Where(c => !Char.IsNumber(c))
                 .Distinct()
                 .ToArray()));
         }
@@ -253,10 +285,10 @@ namespace Funcular.ExtensionMethods
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static string LeftOfFirst(this string originalString, string ofString)
         {
-            if (string.IsNullOrEmpty(originalString))
-                return string.Empty;
+            if (String.IsNullOrEmpty(originalString))
+                return String.Empty;
             var idx = originalString.IndexOf(ofString, StringComparison.OrdinalIgnoreCase);
-            return (idx >= 0 ? originalString.Substring(0, idx) : string.Empty);
+            return (idx >= 0 ? originalString.Substring(0, idx) : String.Empty);
         }
 
         /// <summary>
@@ -269,10 +301,10 @@ namespace Funcular.ExtensionMethods
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static string LeftOfLast(this string originalString, string ofString)
         {
-            if (string.IsNullOrEmpty(originalString))
-                return string.Empty;
+            if (String.IsNullOrEmpty(originalString))
+                return String.Empty;
             var idx = originalString.LastIndexOf(ofString, StringComparison.OrdinalIgnoreCase);
-            return (idx >= 0 ? originalString.Substring(0, idx) : string.Empty);
+            return (idx >= 0 ? originalString.Substring(0, idx) : String.Empty);
         }
 
         /// <summary>
@@ -286,11 +318,11 @@ namespace Funcular.ExtensionMethods
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static string RightOfLast(this string originalString, string ofString)
         {
-            if (string.IsNullOrEmpty(originalString))
-                return string.Empty;
+            if (String.IsNullOrEmpty(originalString))
+                return String.Empty;
             var idx = originalString.LastIndexOf(ofString, StringComparison.OrdinalIgnoreCase);
             return (idx < 0
-                ? string.Empty
+                ? String.Empty
                 : originalString.Substring(idx + ofString.Length, originalString.Length - (idx + ofString.Length)));
         }
 
@@ -305,11 +337,11 @@ namespace Funcular.ExtensionMethods
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static string RightOfFirst(this string originalString, string ofString)
         {
-            if (string.IsNullOrEmpty(originalString))
-                return string.Empty;
+            if (String.IsNullOrEmpty(originalString))
+                return String.Empty;
             var idx = originalString.IndexOf(ofString, StringComparison.OrdinalIgnoreCase);
             return (idx < 0
-                ? string.Empty
+                ? String.Empty
                 : originalString.Substring(idx + ofString.Length));
         }
 
@@ -332,19 +364,19 @@ namespace Funcular.ExtensionMethods
         public static int GetIntegerSuffix(this string value)
         {
             var ret = -1;
-            if (!string.IsNullOrWhiteSpace(value))
+            if (!String.IsNullOrWhiteSpace(value))
             {
                 var sb = new StringBuilder();
                 var chars = value.ToCharArray();
                 for (var i = chars.Length - 1; i >= 0; i--)
                 {
-                    if (char.IsDigit(chars[i]))
+                    if (Char.IsDigit(chars[i]))
                         sb.Insert(0, chars[i]);
                     else
                         break;
                 }
                 int parsed;
-                if (int.TryParse(sb.ToString(), out parsed))
+                if (Int32.TryParse(sb.ToString(), out parsed))
                     ret = parsed;
             }
             return ret;
@@ -355,10 +387,10 @@ namespace Funcular.ExtensionMethods
         /// </summary>
         public static bool IsPositiveInteger(this string value)
         {
-            if (string.IsNullOrWhiteSpace(value))
+            if (String.IsNullOrWhiteSpace(value))
                 return false;
             var chars = value.ToCharArray();
-            return chars.All(c => (char.IsDigit(c) && c != '-'));
+            return chars.All(c => (Char.IsDigit(c) && c != '-'));
         }
 
         /// <summary>
@@ -366,11 +398,11 @@ namespace Funcular.ExtensionMethods
         /// </summary>
         public static bool IsNumeric(this string value)
         {
-            if (string.IsNullOrEmpty(value))
+            if (String.IsNullOrEmpty(value))
                 return false;
             value = value.Replace(" ", "");
             var chars = value.ToCharArray();
-            return chars.All(c => char.IsDigit(c) || c.ToString().IsIn(".", ",", "$", "-"));
+            return chars.All(c => Char.IsDigit(c) || c.ToString().IsIn(".", ",", "$", "-"));
         }
 
         /// <summary>
@@ -378,10 +410,10 @@ namespace Funcular.ExtensionMethods
         /// </summary>
         public static bool IsUsZipCode(this string value)
         {
-            if (string.IsNullOrWhiteSpace(value))
+            if (String.IsNullOrWhiteSpace(value))
                 return false;
             value = value.Replace(" ", "").Replace("-", "");
-            return (new[] {5, 9}).Contains(value.Length) && value.ToCharArray().All(char.IsDigit);
+            return (new[] {5, 9}).Contains(value.Length) && value.ToCharArray().All(Char.IsDigit);
         }
 
         /// <summary>
@@ -413,7 +445,7 @@ namespace Funcular.ExtensionMethods
         public static string ToHex(this byte[] bytes)
         {
             if (!bytes.HasContents())
-                return string.Empty;
+                return String.Empty;
             var hex = BitConverter.ToString(bytes);
             return hex.Replace("-", "");
         }
@@ -467,6 +499,13 @@ namespace Funcular.ExtensionMethods
             var longRand = BitConverter.ToInt64(buf, 0);
 
             return (Math.Abs(longRand%(max - min)) + min);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static DateTime ToDateTime(this string val)
+        {
+            val = val.Trim();
+            return val.Length == 8 ? (DateTime.ParseExact(val, "yyyyMMdd", CultureInfo.CurrentCulture)) : DateTime.Parse(val);
         }
     }
 }

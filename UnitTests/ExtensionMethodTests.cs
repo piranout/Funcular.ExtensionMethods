@@ -1,25 +1,26 @@
 ﻿#region File info
+
 // *********************************************************************************************************
 // Funcular.ExtensionMethods>UnitTests>ExpressionTests.cs
 // Created: 2015-07-08 7:20 PM
-// Updated: 2015-07-18 10:32 AM
-// By: Paul Smith 
-// 
+// Updated: 2016-07-12 10:32 AM
+// By: Paul Smith
+//
 // *********************************************************************************************************
 // LICENSE: The MIT License (MIT)
 // *********************************************************************************************************
 // Copyright (c) 2010-2015 Funcular Labs and Paul Smith
-// 
+//
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
 // in the Software without restriction, including without limitation the rights
 // to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 // copies of the Software, and to permit persons to whom the Software is
 // furnished to do so, subject to the following conditions:
-// 
+//
 // The above copyright notice and this permission notice shall be included in
 // all copies or substantial portions of the Software.
-// 
+//
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 // IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 // FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -27,14 +28,15 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
-// 
+//
 // *********************************************************************************************************
-#endregion
 
-
-
+#endregion File info
 
 #region Usings
+
+using Funcular.ExtensionMethods;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -43,21 +45,18 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Runtime.CompilerServices;
 using System.Text;
-using Funcular.ExtensionMethods;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-#endregion
-
-
-
+#endregion Usings
 
 namespace UnitTests
 {
     [TestClass]
-    public class ExpressionTests
+    public class ExtensionMethodTests
     {
+        /// <summary>
+        /// null, string.Empty, "0", space, "a"
+        /// </summary>
         private readonly string[] _strings = { null, string.Empty, "0", " ", "a" };
-
 
         /// <summary>
         ///Gets or sets the test context which provides
@@ -65,10 +64,8 @@ namespace UnitTests
         ///</summary>
         public TestContext TestContext { get; set; }
 
+        #region Nested types
 
-
-
-        #region Nested type: Thing
         private class Thing
         {
             public string String1 { get; set; }
@@ -79,20 +76,109 @@ namespace UnitTests
 
         private class DerivedThing : Thing
         {
-            public string String3 { get; set; }
-            public string String4 { get; set; }
+            /*            public string String3 { get; set; }
+                        public string String4 { get; set; }*/
         }
-        #endregion
 
+        internal class Node
+        {
+            private readonly ICollection<Node> _children = new List<Node>();
+            private readonly long _id = DateTimeOffset.UtcNow.Ticks;
 
+            public ICollection<Node> Children => _children;
 
+            public long Id => _id;
+
+            public long ParentId { get; set; }
+            public string Name { get; set; }
+        }
+
+        #endregion Nested types
 
         #region Enumerables
+
+        private static readonly string _alphabet = "abcdefghijklmnopqrstuvwxyz";
+        private static readonly List<char> _lowers = _alphabet.Select(x => x).ToList();
+        private static readonly List<char> _uppers = _alphabet.ToUpper().Select(x => x).ToList();
+
+        [TestMethod]
+        public void Flatten_Hierarchy_Flattens()
+        {
+            var rootNode = GetNodeTree();
+            var enumerable = new List<Node>() { rootNode };
+            var flattened = enumerable.Flatten(
+                    childSelector: x => x.Children,
+                    parentIdAssigner: (child, parent) => child.ParentId = parent.Id)
+                .ToArray();
+            Assert.AreEqual(61, flattened.Count());
+            Assert.IsTrue(flattened.All(x => x.ParentId > 0 || x.Name == "Root"));
+        }
+
+        /// <summary>
+        /// Returns a root node with 10 child nodes having 5 children each.
+        /// </summary>
+        /// <returns></returns>
+        private static Node GetNodeTree()
+        {
+            var rootNode = new Node() { Name = "Root" };
+            for (int i = 0; i < 10; i++)
+            {
+                var childNode = new Node() { Name = "Child" };
+                for (int j = 0; j < 5; j++)
+                {
+                    var grandchildNode = new Node() { Name = "Grandchild" };
+                    childNode.Children.Add(grandchildNode);
+                }
+                rootNode.Children.Add(childNode);
+            }
+            return rootNode;
+        }
+
+        [TestMethod]
+        public void Replace_With_Replaces_All_Elements()
+        {
+            // Ensure all elements are in lowercase range:
+            Assert.IsTrue(_lowers.All(x =>
+            {
+                var numericValue = (int)(x);
+                return numericValue >= 97 && numericValue <= 122;
+            }));
+            _lowers.ReplaceWith(_uppers);
+            // Ensure all elements are in uppercase range:
+            Assert.IsTrue(_lowers.All(x =>
+            {
+                var numericValue = (int)(x);
+                return numericValue >= 65 && numericValue <= 90;
+            }));
+            var nullList = null as List<char>;
+            Assert.IsTrue(nullList.ReplaceWith("abcde".ToList()) == null);
+        }
+
+        [TestMethod]
+        public void Median_By_Selects_Midpoint()
+        {
+            var tuples = new List<Tuple<int, int>>();
+            for (int i = 0; i < 10; i++)
+            {
+                tuples.Add(new Tuple<int, int>(i + 1, 0));
+            }
+            Assert.IsTrue(tuples.MedianBy(x => x.Item1).Item1 == 5);
+            tuples.Clear();
+            for (int i = 0; i < 11; i++)
+            {
+                tuples.Add(new Tuple<int, int>(i + 1, 0));
+            }
+            Assert.IsTrue(tuples.MedianBy(x => x.Item1).Item1 == 6);
+            tuples = null;
+            Assert.IsTrue(tuples.MedianBy(x => x.Item1) == null);
+        }
+
         [TestMethod]
         public void Empty_Enumerable_Does_Not_Have_Contents()
         {
             Assert.IsTrue(Enumerable.Empty<string>().HasContents() == false);
             Assert.IsTrue(new List<string>().HasContents() == false);
+            Assert.IsFalse((null as List<string>).HasContents());
         }
 
         [TestMethod]
@@ -111,7 +197,7 @@ namespace UnitTests
             {
                 new DerivedThing {String1 = "A1", String2 = "Z9"},
                 new DerivedThing {String1 = "00", String2 = "ZZ"},
-                new DerivedThing {String1 = "Z9", String2 = "A1", String3 = "Blah", String4 = "Ignore me"}
+                new DerivedThing {String1 = "Z9", String2 = "A1"/*, String3 = "Blah", String4 = "Ignore me"*/}
             }.ToArray();
 
             Assert.IsTrue(things.OrderBy("String1").First().String1 == "00");
@@ -131,10 +217,10 @@ namespace UnitTests
             {
                 new DerivedThing {String1 = "A1", String2 = "Z9"},
                 new DerivedThing {String1 = "00", String2 = "ZZ"},
-                new DerivedThing {String1 = "Z9", String2 = "A1", String3 = "Blah", String4 = "Ignore me"}
+                new DerivedThing {String1 = "Z9", String2 = "A1"/*, String3 = "Blah", String4 = "Ignore me"*/}
             }.ToArray();
             var ordered = things.OrderBy(orderByProperty: "zasdgkha");
-            Console.WriteLine(ordered);
+            Assert.IsNull(ordered);
         }
 
         [TestMethod]
@@ -146,7 +232,7 @@ namespace UnitTests
             {
                 new DerivedThing {String1 = "A1", String2 = "Z9"},
                 new DerivedThing {String1 = "00", String2 = "ZZ"},
-                new DerivedThing {String1 = "Z9", String2 = "A1", String3 = "Blah", String4 = "Ignore me"}
+                new DerivedThing {String1 = "Z9", String2 = "A1"/*, String3 = "Blah", String4 = "Ignore me"*/}
             }.ToArray();
             things = null;
 
@@ -189,7 +275,6 @@ namespace UnitTests
             Assert.IsNull(mid);
 
             Assert.IsNull(Enumerable.Empty<int>().Median());
-
         }
 
         [TestMethod]
@@ -205,7 +290,7 @@ namespace UnitTests
         [TestMethod]
         public void Clear_And_Removes_All()
         {
-            var strings = new string[] {"one", "two", "three"}.ToList();
+            var strings = new string[] { "one", "two", "three" }.ToList();
             strings.ClearAnd().Add("one");
             Assert.AreEqual(strings.Count, 1);
         }
@@ -239,7 +324,7 @@ namespace UnitTests
             var things = new List<Thing>();
             for (int i = 1; i <= numbers.Count(); i++)
             {
-                things.Add(new DerivedThing() {Int1 = i, Int2 = -1*i, String1 = i.ToString(), String2 = (-1*1).ToString()});
+                things.Add(new DerivedThing() { Int1 = i, Int2 = -1 * i, String1 = i.ToString(), String2 = (-1 * 1).ToString() });
             }
             var paged = things.GetPagedResults(3, 5, "String2").ToList();
             Assert.AreEqual(paged.Count, 1);
@@ -294,9 +379,11 @@ namespace UnitTests
                 Assert.IsTrue(distinctnumbers.Add(distinctThing.Int1));
             }
         }
-        #endregion
+
+        #endregion Enumerables
 
         #region Reflection and introspection
+
         [TestMethod]
         public void Get_Caller_Name_Returns_Correct_Name()
         {
@@ -309,23 +396,23 @@ namespace UnitTests
             Assert.AreEqual(expected, actual);
         }
 
-
         [TestMethod]
         public void Get_Current_Name_Returns_Correct_Name()
         {
-            Assert.AreEqual(EnumerableExtensions.GetCurrentMethodName(), "Get_Current_Name_Returns_Correct_Name");
+            Assert.AreEqual(ReflectionExtensions.GetCurrentMethodName(), "Get_Current_Name_Returns_Correct_Name");
         }
 
-        public Tuple<string,string> GetCallingMethodName([CallerMemberName] string caller = "")
+        public Tuple<string, string> GetCallingMethodName([CallerMemberName] string caller = "")
         {
-            var string1 = EnumerableExtensions.GetCallingMethodName();
+            var string1 = ReflectionExtensions.GetCallingMethodName();
             var string2 = caller;
             return new Tuple<string, string>(string1, string2);
         }
-        #endregion
 
+        #endregion Reflection and introspection
 
         #region Queryables
+
         [TestMethod]
         public void Modified_Expression_Changes_String_Comparison()
         {
@@ -344,11 +431,10 @@ namespace UnitTests
 
             Assert.IsFalse(expr2("s1", "S1"));
             Assert.IsTrue(modifiedExpr2("s1", "S1"));
-
         }
 
         /// <summary>
-        /// Portions of this test don't relate to supported functionality, but 
+        /// Portions of this test don't relate to supported functionality, but
         /// are included for coverage completeness.
         /// </summary>
         [TestMethod]
@@ -376,10 +462,7 @@ namespace UnitTests
             Assert.IsNotNull(caseInsensitiveQueryable.ElementType);
             Assert.IsNotNull(caseInsensitiveQueryable.Expression);
             Assert.IsNotNull(((IEnumerable)caseInsensitiveQueryable).GetEnumerator());
-
         }
-
-
 
         [TestMethod]
         public void Intercepted_Queryable_Is_Case_Insensitive()
@@ -396,12 +479,11 @@ namespace UnitTests
             Assert.IsTrue(originalQueryable.Count(thing => thing.String1 == thing.String2) == 1);
             Assert.IsTrue(caseInsensitiveQueryable.Count(thing => thing.String1 == thing.String2) == 2);
         }
-        #endregion
 
-
-
+        #endregion Queryables
 
         #region Primitives
+
         [TestMethod]
         public void Coalesce_Null_Strings_Is_Null()
         {
@@ -428,31 +510,47 @@ namespace UnitTests
             // ReSharper restore ExpressionIsAlwaysNull
         }
 
-
         [TestMethod]
         public void Strings_Contain_Others()
         {
-#pragma warning disable 219
-            var nullString = ((string)null);
-#pragma warning restore 219
             var space = " ";
             var abc = "abc";
             var abcde = "abcde";
-
             var strings = new[] { space, abc, abcde };
 
             Assert.IsTrue(strings.Contains(abc));
-            Assert.IsTrue(strings.Contains(abc.ToUpper()));
+            Assert.IsTrue(strings.Contains(abc.ToUpper(), StringComparer.OrdinalIgnoreCase));
+            Assert.IsTrue(strings.Contains(abc.ToUpper(), caseSensitive: false));
             Assert.IsTrue(abcde.ContainsAny(strings));
+            Assert.IsTrue(abcde.IsContainedByAny(strings));
             Assert.IsTrue(abcde.ToUpper().ContainsAny(strings));
-
+            Assert.IsTrue(abcde.ToUpper().IsContainedByAny(strings));
             Assert.IsTrue(strings.Contains("abcdefg") == false);
             Assert.IsTrue("abcdefg".ContainsAny(strings));
+            Assert.IsTrue("abcdefg".IsContainedByAny(strings));
+
+            Assert.IsFalse("abcdefg".ToUpper().IsContainedByAny(StringComparison.CurrentCulture, strings));
+
+            Assert.IsFalse(strings.Contains(abc.ToUpper()));
             Assert.IsFalse(((string)null).ContainsAny(strings));
             Assert.IsFalse(((string)null).ContainsAny(string.Empty));
             Assert.IsFalse(string.Empty.ContainsAny(null));
+            Assert.IsFalse(((string)null).IsContainedByAny(strings));
+            Assert.IsFalse(((string)null).IsContainedByAny(string.Empty));
+            Assert.IsFalse(string.Empty.IsContainedByAny(null));
             Assert.IsFalse(strings.Contains(abcde.ToUpper(), caseSensitive: true));
+        }
 
+        [TestMethod()]
+        public void ContainsAny_Test()
+        {
+            var space = " ";
+            var abc = "abc";
+            var abcde = "abcde";
+            var strings = new[] { space, abc, abcde };
+            Assert.IsTrue(abcde.ContainsAny(strings));
+            Assert.IsTrue(abcde.ToUpper().ContainsAny(strings));
+            Assert.IsFalse(abcde.ToUpper().ContainsAny(StringComparison.CurrentCulture, strings));
         }
 
         [TestMethod]
@@ -510,7 +608,6 @@ namespace UnitTests
             Assert.IsFalse(" ".IsPositiveInteger());
             Assert.IsFalse("a".IsPositiveInteger());
             Assert.IsFalse(((string)null).IsPositiveInteger());
-
         }
 
         [TestMethod]
@@ -524,8 +621,6 @@ namespace UnitTests
             Assert.IsTrue(string.Empty.IsIn("a", "b", string.Empty));
             Assert.IsFalse(((string)null).IsIn("a", "b", (string)null));
             Assert.IsFalse(string.Empty.IsIn(new string[0]));
-
-
         }
 
         [TestMethod]
@@ -549,12 +644,10 @@ namespace UnitTests
             Assert.AreSame("".LeftOfFirst("<body>"), string.Empty);
             Assert.AreSame(" ".LeftOfFirst("<body>"), string.Empty);
 
-
             Assert.IsTrue("<html><body><div><div>".LeftOfLast("<div>") == "<html><body><div>");
             Assert.AreSame(((string)null).LeftOfLast("<div>"), string.Empty);
             Assert.AreSame("".LeftOfLast("<div>"), string.Empty);
             Assert.AreSame(" ".LeftOfLast("<div>"), string.Empty);
-
         }
 
         [TestMethod]
@@ -590,8 +683,6 @@ namespace UnitTests
             replaced = str.ReplaceAll("Z", "Y");
             Assert.AreEqual(str, replaced);
         }
-
-
 
         [TestMethod]
         public void Ensure_Methods_Append_Correctly()
@@ -631,7 +722,6 @@ namespace UnitTests
 
             Assert.AreEqual(((decimal?)null).Coalesce(new decimal?[] { }), default(decimal));
             Assert.AreEqual(((decimal?)null).Coalesce(new decimal?[] { null, 5.0m }), 5.0m);
-
         }
 
         [TestMethod]
@@ -672,9 +762,11 @@ namespace UnitTests
             Assert.AreEqual(Encoding.UTF8.GetString(bytes2), originalString);
             Assert.AreEqual((new byte[0]).ToHex(), string.Empty);
         }
-        #endregion
+
+        #endregion Primitives
 
         #region Datetime and Timespan tests
+
         [TestMethod]
         public void One_Second_Equals_One_Million_Nanoseconds()
         {
@@ -697,12 +789,13 @@ namespace UnitTests
         public void Enum_To_List_Throws_On_Non_Enum_Type()
         {
             var x = EnumerableExtensions.EnumToList<int>();
+            Assert.IsNull(x);
         }
 
         [TestMethod]
         public void Enum_To_List_Returns_For_Enum_Type()
         {
-            var y = Enum.GetNames(typeof (StringComparison));
+            var y = Enum.GetNames(typeof(StringComparison));
             var x = EnumerableExtensions.EnumToList<StringComparison>();
             Assert.AreEqual(y.Length, x.Count);
         }
@@ -726,8 +819,8 @@ namespace UnitTests
             Assert.AreEqual(date.Month, 7);
             Assert.AreEqual(date.Day, 22);
         }
-        #endregion
 
+        #endregion Datetime and Timespan tests
     }
 
     [Flags]
@@ -739,6 +832,6 @@ namespace UnitTests
         Editor = 4,
         Administrator = 8,
         SysAdmin = 16,
-        GuyWhoJustP0Wn3DYou = SysAdmin | Administrator | Editor | Moderator 
+        GuyWhoJustP0Wn3DYou = SysAdmin | Administrator | Editor | Moderator
     }
 }
