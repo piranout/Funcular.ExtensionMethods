@@ -238,6 +238,7 @@ namespace UnitTests
 
             // ReSharper disable once ExpressionIsAlwaysNull
             var ordered = things.OrderBy(orderByProperty: "String1");
+            Console.WriteLine(ordered);
         }
 
         [TestMethod]
